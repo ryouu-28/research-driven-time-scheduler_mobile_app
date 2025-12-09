@@ -1,0 +1,374 @@
+{
+ "root": {
+    "questionId": "Q1",
+    "question": "When you have an important task to do, what usually makes it hard to start?",
+    "options": [
+      { 
+        "label": "A", 
+        "text": "My mood or emotional state", 
+        "nextPath": "Mood",
+        "score": { "mood": 2 }
+      },
+      { 
+        "label": "B", 
+        "text": "The task feels overwhelming or mentally heavy", 
+        "nextPath": "Overwhelm",
+        "score": { "overwhelm": 2 }
+      },
+      { 
+        "label": "C", 
+        "text": "I get drawn to something more rewarding or interesting", 
+        "nextPath": "Reward",
+        "score": { "reward": 2 }
+      },
+      { 
+        "label": "D", 
+        "text": "I worry about doing it badly", 
+        "nextPath": "Perfection",
+        "score": { "perfection": 2 }
+      },
+      { 
+        "label": "E", 
+        "text": "I don’t feel any urgency", 
+        "nextPath": "Classic",
+        "score": { "classic": 2 }
+      },
+      { 
+        "label": "F", 
+        "text": "I can’t keep a consistent routine", 
+        "nextPath": "Drifter",
+        "score": { "drifter": 2 }
+      }
+    ]
+  },
+
+  "paths": {
+    "Mood": {
+      "questions": [
+        {
+          "questionId": "Q2",
+          "question": "When you're not in the right mood to work, what do you usually do?",
+          "options": [
+            { "label": "A", "text": "Wait until I feel better", "score": { "mood": 2 } },
+            { "label": "B", "text": "Do comfort activities", "score": { "mood": 2 } },
+            { "label": "C", "text": "Try to start but feel heavier", "score": { "mood": 1, "overwhelm": 1 } },
+            { "label": "D", "text": "Avoid thinking about it", "score": { "mood": 1, "overwhelm": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q3",
+          "question": "Does your mood improve once you finally begin?",
+          "options": [
+            { "label": "Yes", "text": "Yes", "score": { "mood": 2 } },
+            { "label": "No", "text": "No" }
+          ]
+        },
+        {
+          "questionId": "Q4",
+          "question": "What emotion do you feel most when trying to start?",
+          "options": [
+            { "label": "A", "text": "Anxiety", "score": { "perfection": 1, "overwhelm": 1 } },
+            { "label": "B", "text": "Boredom", "score": { "classic": 1 } },
+            { "label": "C", "text": "Guilt", "score": { "classic": 1, "perfection": 1 } },
+            { "label": "D", "text": "Low energy / sadness", "score": { "mood": 2 } },
+            { "label": "E", "text": "Frustration", "score": { "overwhelm": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q5",
+          "question": "What would help you start faster?",
+          "options": [
+            { "label": "A", "text": "Feeling emotionally stable", "score": { "mood": 1 } },
+            { "label": "B", "text": "Someone checking in", "score": { "drifter": 1, "classic": 1 } },
+            { "label": "C", "text": "A reward waiting", "score": { "reward": 1 } },
+            { "label": "D", "text": "Breaking tasks into steps", "score": { "overwhelm": 1 } },
+            { "label": "E", "text": "Less pressure", "score": { "perfection": 1 } }
+          ]
+        }
+      ]
+    },
+
+    "Overwhelm": {
+      "questions": [
+        {
+          "questionId": "Q6",
+          "question": "When a task feels demanding, what's your first reaction?",
+          "options": [
+            { "label": "A", "text": "I shut down", "score": { "overwhelm": 0 } },
+            { "label": "B", "text": "I feel tense", "score": { "overwhelm": 0 } },
+            { "label": "C", "text": "I look for easier tasks", "score": { "reward": 0 } },
+            { "label": "D", "text": "I wait until last minute", "score": { "classic": 0 } },
+            { "label": "E", "text": "I distract myself", "score": { "reward": 0 } }
+          ]
+        },
+        {
+          "questionId": "Q7",
+          "question": "Does breaking the task into steps help?",
+          "options": [
+            { "label": "Yes", "text": "Yes", "score": { "overwhelm": 3 } },
+            { "label": "No", "text": "No" }
+          ]
+        },
+        {
+          "questionId": "Q8",
+          "question": "What part feels hardest?",
+          "options": [
+            { "label": "A", "text": "Starting", "score": { "classic": 1, "mood": 1 } },
+            { "label": "B", "text": "Figuring out what to do", "score": { "drifter": 1 } },
+            { "label": "C", "text": "Thinking about mistakes", "score": { "perfection": 1 } },
+            { "label": "D", "text": "Keeping energy", "score": { "mood": 1 } },
+            { "label": "E", "text": "Too boring", "score": { "classic": 1, "reward": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q9",
+          "question": "When thinking about the task, do you…",
+          "options": [
+            { "label": "A", "text": "Feel physical discomfort", "score": { "overwhelm": 1 } },
+            { "label": "B", "text": "Lose motivation instantly", "score": { "mood": 1 } },
+            { "label": "C", "text": "Fear mistakes", "score": { "perfection": 1 } },
+            { "label": "D", "text": "Avoid it until needed", "score": { "classic": 1 } },
+            { "label": "E", "text": "Escape to fun distractions", "score": { "reward": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q10",
+          "question": "What would make the task easier?",
+          "options": [
+            { "label": "A", "text": "A step-by-step guide", "score": { "overwhelm": 1 } },
+            { "label": "B", "text": "A timer", "score": { "classic": 1 } },
+            { "label": "C", "text": "Feeling emotionally okay", "score": { "mood": 1 } },
+            { "label": "D", "text": "A reward", "score": { "reward": 1 } },
+            { "label": "E", "text": "Accountability", "score": { "drifter": 1 } }
+          ]
+        }
+      ]
+    },
+
+    "Reward": {
+      "questions": [
+        {
+          "questionId": "Q11",
+          "question": "What pulls your attention away most often?",
+          "options": [
+            { "label": "A", "text": "Something exciting", "score": { "reward": 1 } },
+            { "label": "B", "text": "Something easier", "score": { "reward": 1 } },
+            { "label": "C", "text": "Something instantly rewarding", "score": { "reward": 1 } },
+            { "label": "D", "text": "Something urgent", "score": { "classic": 1 } },
+            { "label": "E", "text": "My emotions", "score": { "mood": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q12",
+          "question": "How do you behave with long-term tasks?",
+          "options": [
+            { "label": "A", "text": "I put it off", "score": { "reward": 1 } },
+            { "label": "B", "text": "Lose interest", "score": { "reward": 1 } },
+            { "label": "C", "text": "Choose fun instead", "score": { "reward": 1 } },
+            { "label": "D", "text": "I can’t take it seriously", "score": { "reward": 1 } },
+            { "label": "E", "text": "Only start when pressured", "score": { "classic": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q13",
+          "question": "Would small rewards help you finish faster?",
+          "options": [
+            { "label": "Yes", "text": "Yes", "score": { "reward": 3 } },
+            { "label": "No" , "text": "No", "score": {"reward": 0}}
+          ]
+        },
+        {
+          "questionId": "Q14",
+          "question": "What motivates you more?",
+          "options": [
+            { "label": "A", "text": "Enjoyment", "score": { "reward": 1 } },
+            { "label": "B", "text": "Pressure", "score": { "classic": 1 } },
+            { "label": "C", "text": "Structure", "score": { "drifter": 1 } },
+            { "label": "D", "text": "Avoiding guilt", "score": { "classic": 1, "perfection": 1 } },
+            { "label": "E", "text": "Emotional stability", "score": { "mood": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q15",
+          "question": "When procrastinating, what do you usually do?",
+          "options": [
+            { "label": "A", "text": "Scroll social media", "score": { "reward": 1 } },
+            { "label": "B", "text": "Watch videos", "score": { "reward": 1 } },
+            { "label": "C", "text": "Talk/play games", "score": { "reward": 1 } },
+            { "label": "D", "text": "Do hobbies", "score": { "reward": 1 } },
+            { "label": "E", "text": "Rest/sleep", "score": { "mood": 1 } }
+          ]
+        }
+      ]
+    },
+
+    "Perfection": {
+      "questions": [
+        {
+          "questionId": "Q16",
+          "question": "What scares you most about starting?",
+          "options": [
+            { "label": "A", "text": "Doing it wrong", "score": { "perfection": 1 } },
+            { "label": "B", "text": "Not meeting expectations", "score": { "perfection": 1 } },
+            { "label": "C", "text": "Mistakes", "score": { "perfection": 1 } },
+            { "label": "D", "text": "Judgment", "score": { "perfection": 1 } },
+            { "label": "E", "text": "Disappointing myself", "score": { "perfection": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q17",
+          "question": "When avoiding the task, what thought appears?",
+          "options": [
+            { "label": "A", "text": "It has to be perfect", "score": { "perfection": 1 } },
+            { "label": "B", "text": "I'm not ready yet", "score": { "perfection": 1 } },
+            { "label": "C", "text": "What if I mess up?", "score": { "perfection": 1 } },
+            { "label": "D", "text": "I'll start once I figure it out", "score": { "perfection": 1 } },
+            { "label": "E", "text": "I should research more", "score": { "perfection": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q18",
+          "question": "When the deadline gets close, what do you do?",
+          "options": [
+            { "label": "A", "text": "Rush but feel ashamed", "score": { "perfection": 1 } },
+            { "label": "B", "text": "Obsess details", "score": { "perfection": 1 } },
+            { "label": "C", "text": "Want to start over", "score": { "perfection": 1 } },
+            { "label": "D", "text": "Avoid seeing result", "score": { "perfection": 1 } },
+            { "label": "E", "text": "Make it good enough", "score": { "classic": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q19",
+          "question": "How do you feel after submitting something imperfect?",
+          "options": [
+            { "label": "A", "text": "Embarrassed", "score": { "perfection": 1 } },
+            { "label": "B", "text": "Anxious", "score": { "perfection": 1 } },
+            { "label": "C", "text": "Frustrated", "score": { "perfection": 1 } },
+            { "label": "D", "text": "Upset", "score": { "perfection": 1 } },
+            { "label": "E", "text": "Neutral", "score": { "classic": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q20",
+          "question": "What makes work acceptable for you?",
+          "options": [
+            { "label": "A", "text": "Matches standards", "score": { "perfection": 1 } },
+            { "label": "B", "text": "Everything feels correct", "score": { "perfection": 1 } },
+            { "label": "C", "text": "Precise details", "score": { "perfection": 1 } },
+            { "label": "D", "text": "100% sure", "score": { "perfection": 1 } },
+            { "label": "E", "text": "Good enough to pass", "score": { "classic": 1 } }
+          ]
+        }
+      ]
+    },
+
+    "Classic": {
+      "questions": [
+        {
+          "questionId": "Q21",
+          "question": "If deadlines didn’t exist, what would you do?",
+          "options": [
+            { "label": "A", "text": "Put things off", "score": { "classic": 1 } },
+            { "label": "B", "text": "Only do interesting things", "score": { "reward": 1 } },
+            { "label": "C", "text": "Work when pressured", "score": { "classic": 1 } },
+            { "label": "D", "text": "Forget tasks", "score": { "drifter": 1 } },
+            { "label": "E", "text": "Do nothing until needed", "score": { "classic": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q22",
+          "question": "When do you work best?",
+          "options": [
+            { "label": "A", "text": "Last minute", "score": { "classic": 1 } },
+            { "label": "B", "text": "When pressured", "score": { "classic": 1 } },
+            { "label": "C", "text": "When deadline is near", "score": { "classic": 1 } },
+            { "label": "D", "text": "When watched", "score": { "drifter": 1 } },
+            { "label": "E", "text": "When bored", "score": { "mood": 1, "reward": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q23",
+          "question": "Why delay even simple tasks?",
+          "options": [
+            { "label": "A", "text": "No urgency", "score": { "classic": 1 } },
+            { "label": "B", "text": "Not in the mood", "score": { "mood": 1 } },
+            { "label": "C", "text": "Too boring", "score": { "classic": 1 } },
+            { "label": "D", "text": "Not enjoyable", "score": { "reward": 1 } },
+            { "label": "E", "text": "Just habit", "score": { "classic": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q24",
+          "question": "What helps you get started?",
+          "options": [
+            { "label": "A", "text": "A timer", "score": { "classic": 1 } },
+            { "label": "B", "text": "Deadline reminder", "score": { "classic": 1 } },
+            { "label": "C", "text": "Someone pushing me", "score": { "classic": 1 } },
+            { "label": "D", "text": "Anxiety building", "score": { "classic": 1 } },
+            { "label": "E", "text": "A reward", "score": { "reward": 1 } }
+          ]
+        }
+      ]
+    },
+
+    "Drifter": {
+      "questions": [
+        {
+          "questionId": "Q25",
+          "question": "How well do you manage routines?",
+          "options": [
+            { "label": "A", "text": "Lose track easily", "score": { "drifter": 1 } },
+            { "label": "B", "text": "Can't stay consistent", "score": { "drifter": 1 } },
+            { "label": "C", "text": "I forget tasks", "score": { "drifter": 1 } },
+            { "label": "D", "text": "Schedule falls apart", "score": { "drifter": 1 } },
+            { "label": "E", "text": "I avoid planning", "score": { "drifter": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q26",
+          "question": "When planning your day, what goes wrong?",
+          "options": [
+            { "label": "A", "text": "Underestimate time", "score": { "drifter": 1 } },
+            { "label": "B", "text": "Jump between tasks", "score": { "drifter": 1 } },
+            { "label": "C", "text": "Forget the plan", "score": { "drifter": 1 } },
+            { "label": "D", "text": "Get overwhelmed planning", "score": { "drifter": 1 } },
+            { "label": "E", "text": "Don't finish plan", "score": { "drifter": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q27",
+          "question": "What describes your task style?",
+          "options": [
+            { "label": "A", "text": "Go with the flow", "score": { "drifter": 1 } },
+            { "label": "B", "text": "I'll figure it out later", "score": { "drifter": 1 } },
+            { "label": "C", "text": "I'll do it when I remember", "score": { "drifter": 1 } },
+            { "label": "D", "text": "I plan but forget", "score": { "drifter": 1 } },
+            { "label": "E", "text": "I plan but don’t follow through", "score": { "drifter": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q28",
+          "question": "What do you struggle with the most?",
+          "options": [
+            { "label": "A", "text": "Self-discipline", "score": { "drifter": 1 } },
+            { "label": "B", "text": "Organizing tasks", "score": { "drifter": 1 } },
+            { "label": "C", "text": "Staying consistent", "score": { "drifter": 1 } },
+            { "label": "D", "text": "Prioritizing", "score": { "drifter": 1 } },
+            { "label": "E", "text": "Tracking tasks", "score": { "drifter": 1 } }
+          ]
+        },
+        {
+          "questionId": "Q29",
+          "question": "What would help you most?",
+          "options": [
+            { "label": "A", "text": "Structured routine", "score": { "drifter": 1 } },
+            { "label": "B", "text": "Clear deadlines", "score": { "drifter": 1 } },
+            { "label": "C", "text": "Accountability", "score": { "drifter": 1 } },
+            { "label": "D", "text": "Checklists", "score": { "drifter": 1 } },
+            { "label": "E", "text": "Reminders", "score": { "drifter": 1 } }
+          ]
+        }
+      ]
+    }
+  }
+}
