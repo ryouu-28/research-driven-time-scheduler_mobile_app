@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // import 'package:scheduler_prototype/pages/survey/surveyQuestionsPage.dart';
 import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyQuestionsPage.dart';
+import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyFirstQuestionPage.dart';
 
 
 class SurveyStartpage extends StatelessWidget {
@@ -23,7 +24,7 @@ class SurveyStartpage extends StatelessWidget {
               child: OutlinedButton(
               onPressed: (){
                 Navigator.push(context, 
-                MaterialPageRoute(builder: (context) => const SurveyQuestionsPage()));}, 
+                MaterialPageRoute(builder: (context) => const FirstQuestion()));}, 
               child: Text("answer 1")
               ),
             )

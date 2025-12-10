@@ -1,0 +1,34 @@
+{
+  "survey": [
+    {
+      "id": 1,
+      "question": "Do you get overwhelmed with too many tasks?",
+      "type": "choice",
+      "options": ["Yes", "No"]
+    },
+    {
+      "id": 2,
+      "question": "How many tasks do you think you can do within one day?",
+      "type": "choice",
+      "options": ["1-2 tasks", "3-4 tasks", "5+ tasks"]
+    },
+    {
+      "id": 3,
+      "question": "Do you want to be reminded everyday about things/tasks you need to do?",
+      "type": "choice",
+      "options": ["Yes", "No"]
+    },
+    {
+      "id": 4,
+      "question": "Do you want your schedule to be Focus Session Style or Flexible Style?",
+      "type": "choice",
+      "options": ["Focus Session (1)", "Flexible (2)"]
+    },
+    {
+      "id": 5,
+      "question": "What time are you most active?",
+      "type": "choice",
+      "options": ["Morning", "Afternoon", "Night"]
+    }
+  ]
+}
