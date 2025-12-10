@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/surveyFirstModel.dart';
 // import 'package:research_drive_time_scheduler_mobile_app/pages/survey/surveyStartPage.';
 import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyStartPage.dart';
 
 void main() async {
- WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
+  WidgetsFlutterBinding.ensureInitialized();
 
-  await Hive.openBox('surveys');
+  final appDocDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocDir.path);
+
+  Hive.registerAdapter(SurveyFirstAdapter());
 
   runApp(const MyApp());
 }

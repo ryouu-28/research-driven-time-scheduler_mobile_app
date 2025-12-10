@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // import 'package:scheduler_prototype/pages/taskSchedule/taskScheduleHome.dart';
+import '../../screens/survey/surveyCompletePage.dart';
 import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/taskScheduleHome.dart';
 
 class SurveyQuestionsPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class SurveyQuestionsPage extends StatefulWidget {
 
 class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
   Map<String, dynamic> quizData = {};
+  Map<String, dynamic> firstQuestions = {};
   Map<String, int> scores = 
   { 
   "mood": 0, 
@@ -40,6 +42,13 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
     });
   }
 
+  Future<void> loadFirstQuestions() async {
+    final jsonString = await rootBundle.loadString('assets/firstQuestion.json');
+    final data = jsonDecode(jsonString);
+    setState(() {
+      firstQuestions = data;
+    });
+  }
   @override
   Widget build(BuildContext context) {
 
@@ -138,62 +147,6 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
             ...options.map<Widget>((opt ){
               return OutlinedButton(onPressed: () => selectOption(opt), child: Text(opt["text"]));
             })
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SurveyComplete extends StatefulWidget {
-  const SurveyComplete({super.key});
-
-  @override
-  State<SurveyComplete> createState() => _SurveyCompleteState();
-}
-
-class _SurveyCompleteState extends State<SurveyComplete> {
-   List<Widget> results = [
-    Text("I would like to welcome you"),
-    Text("Each answer you provided is end up being helpful to identify your habits, characteristic, and personality."),
-    Text("You are"),
-    Text("You are description...............")
-  ];
-  int visibleCount = 0;
-  bool isOutlined = false;
-
-    void showNextText() {
-      setState(() {
-        if (visibleCount < results.length) {
-          visibleCount++;
-        }
-
-        if(visibleCount == results.length){isOutlined = true;}
-        
-      });
-    }
-  
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ...results.take(visibleCount),
-            const SizedBox(height: 20),
-            isOutlined
-                ? OutlinedButton(
-                    onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => const TaskscheduleHome()));},
-                    child: Text("Continue"),
-                  )
-                : TextButton(
-                    onPressed: showNextText,
-                    child: Text("Click here to continue..."),
-                  ),
           ],
         ),
       ),

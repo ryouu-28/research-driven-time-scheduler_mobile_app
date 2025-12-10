@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyCompletePage.dart';
+import '../../controllers/surveyController.dart';
+import '../../models/surveyFirstModel.dart';
+import '../../screens/survey/surveyCompletePage.dart';
 
 class FirstQuestion extends StatefulWidget {
   const FirstQuestion({super.key});
@@ -10,6 +14,7 @@ class FirstQuestion extends StatefulWidget {
 }
 
 class _FirstQuestion extends State<FirstQuestion> {
+    final SurveyFirstController controller = SurveyFirstController();
     Map<String, dynamic> quizQuestions = {};
     int currentIndex = 0;
 
@@ -27,9 +32,14 @@ class _FirstQuestion extends State<FirstQuestion> {
     });
   }
 
-  void nextQuestion(String opt, int idQuestion){
-    print(opt);
-    print(idQuestion);
+  void nextQuestion(String opt, int idQuestion) async {
+    final answer = SurveyFirst(
+      questionId: idQuestion,
+      answer: opt,
+    );
+    await controller.saveAnswer(answer);
+
+    
     if (currentIndex < quizQuestions["survey"].length - 1) {
         setState(() {
           currentIndex++;
@@ -38,16 +48,17 @@ class _FirstQuestion extends State<FirstQuestion> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FirstQuestion(),
+            builder: (context) => SurveyComplete(),
           ),
         );
       }
+
+
   }
 
 
   @override
 Widget build(BuildContext context) {
-  // Prevent null crash while JSON is still loading
   if (quizQuestions.isEmpty) {
     return const Scaffold(
       body: Center(child: CircularProgressIndicator()),
