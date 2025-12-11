@@ -1,18 +1,24 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/surveyFirstModel.dart';
 // import 'package:scheduler_prototype/pages/taskSchedule/taskScheduleHome.dart';
 import '../../screens/survey/surveyCompletePage.dart';
 import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/taskScheduleHome.dart';
+import '../../controllers/surveyController.dart';
+import '../../models/surveyFirstModel.dart';
 
 class SurveyQuestionsPage extends StatefulWidget {
-  const SurveyQuestionsPage({super.key});
+  const SurveyQuestionsPage({
+    super.key,
+    });
 
   @override
   State<SurveyQuestionsPage> createState() => _SurveyQuestionsPageState();
 }
 
 class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
+  final SurveyFirstController controller = SurveyFirstController();
   Map<String, dynamic> quizData = {};
   Map<String, dynamic> firstQuestions = {};
   Map<String, int> scores = 
@@ -66,6 +72,7 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
         print(key);
         print(value);
       },);
+
       
     }
   
@@ -84,6 +91,23 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
 
     }
 
+    void checkPersonality() async{
+        int maxValue = scores.values.reduce((a, b) => a > b ? a : b);
+
+        List<String> highestTypes = scores.entries
+        .where((e) => e.value == maxValue)
+        .map((e) => e.key)
+        .toList();
+
+        bool tie = highestTypes.length > 1;
+        print("glennmona");
+        print(highestTypes[0]);
+        if(tie){
+          print(highestTypes);
+        }
+        
+
+    }
     void selectOption(Map<String, dynamic> opt) {
       AddScore(opt);
 
@@ -94,7 +118,9 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
           currentIndex++;
         });
       } else {
+        checkPersonality();
         Navigator.push(
+          
           context,
           MaterialPageRoute(
             builder: (context) => SurveyComplete(),

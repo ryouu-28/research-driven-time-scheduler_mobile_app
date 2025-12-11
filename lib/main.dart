@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:research_driven_time_scheduler_mobile_app/models/surveyFirstModel.dart';
 // import 'package:research_drive_time_scheduler_mobile_app/pages/survey/surveyStartPage.';
 import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyStartPage.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/surveyPersonalityModel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,7 @@ void main() async {
   Hive.init(appDocDir.path);
 
   Hive.registerAdapter(SurveyFirstAdapter());
+  Hive.registerAdapter(SurveyPersonalityAdapter());
 
   runApp(const MyApp());
 }

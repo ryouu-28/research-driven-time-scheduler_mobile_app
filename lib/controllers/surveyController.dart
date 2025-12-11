@@ -1,8 +1,10 @@
 import 'package:hive/hive.dart';
 import '../models/surveyFirstModel.dart';
+import '../models/surveyPersonalityModel.dart';
 
 class SurveyFirstController {
   static const String boxName = "surveyFirstBox";
+  static const String personalityBox = "personalityBox";
 
   /// Open the Hive box
   Future<Box<SurveyFirst>> openBox() async {
@@ -47,6 +49,24 @@ class SurveyFirstController {
   /// Delete all answers
   Future<void> clearAll() async {
     final box = await openBox();
+    await box.clear();
+  }
+ Future<Box<SurveyPersonality>> openPersonalityBox() async {
+    return await Hive.openBox<SurveyPersonality>(personalityBox);
+  }
+
+  Future<void> savePersonality(SurveyPersonality result) async {
+    final box = await openPersonalityBox();
+    await box.put("user_personality", result); 
+  }
+
+  Future<SurveyPersonality?> getPersonality() async {
+    final box = await openPersonalityBox();
+    return box.get("user_personality");
+  }
+
+  Future<void> clearPersonality() async {
+    final box = await openPersonalityBox();
     await box.clear();
   }
 }

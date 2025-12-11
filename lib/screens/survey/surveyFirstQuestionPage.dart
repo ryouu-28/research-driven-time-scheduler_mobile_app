@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyCompletePage.dart';
+import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyQuestionsPage.dart';
 import '../../controllers/surveyController.dart';
 import '../../models/surveyFirstModel.dart';
 import '../../screens/survey/surveyCompletePage.dart';
@@ -48,7 +49,7 @@ class _FirstQuestion extends State<FirstQuestion> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SurveyComplete(),
+            builder: (context) => SurveyQuestionsPage(),
           ),
         );
       }
