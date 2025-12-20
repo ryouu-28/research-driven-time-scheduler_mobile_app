@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:research_driven_time_scheduler_mobile_app/models/surveyFirstModel.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/surveyPersonalityModel.dart';
 // import 'package:scheduler_prototype/pages/taskSchedule/taskScheduleHome.dart';
 import '../../screens/survey/surveyCompletePage.dart';
 import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/taskScheduleHome.dart';
@@ -101,9 +102,14 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
 
         bool tie = highestTypes.length > 1;
         print("glennmona");
+        print(tie);
         print(highestTypes[0]);
         if(tie){
-          print(highestTypes);
+          final userPersonality = SurveyPersonality(personality: "classic");
+          await controller.savePersonality(userPersonality);
+        } else {
+          final userPersonality = SurveyPersonality(personality: highestTypes[0]);
+          await controller.savePersonality(userPersonality);
         }
         
 

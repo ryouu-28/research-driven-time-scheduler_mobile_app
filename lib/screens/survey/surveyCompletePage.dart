@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/taskScheduleHome.dart';
 import '../../controllers/surveyController.dart';
 import '../../models/surveyFirstModel.dart';
 
@@ -29,6 +30,9 @@ class _SurveyCompleteState extends State<SurveyComplete> {
       for (var a in allAnswers) {
         print("Question ID: ${a.questionId}, Answer: ${a.answer}");
       }
+
+    final UsersPersonality = await controller.getPersonality();
+    print("User's Personality: ${UsersPersonality?.personality}");
     }
     void showNextText() {
       setState(() {
@@ -56,7 +60,7 @@ class _SurveyCompleteState extends State<SurveyComplete> {
             const SizedBox(height: 20),
             isOutlined
                 ? OutlinedButton(
-                    onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => const SurveyComplete()));},
+                    onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => const TaskScheduleHome()));},
                     child: Text("Continue"),
                   )
                 : TextButton(

@@ -1,15 +1,15 @@
 import 'dart:convert';
-
+import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:flutter/material.dart';
 
-class TaskscheduleHome extends StatefulWidget {
-  const TaskscheduleHome({super.key});
+class TaskScheduleHome extends StatefulWidget {
+  const TaskScheduleHome({super.key});
 
   @override
-  State<TaskscheduleHome> createState() => _MyWidgetState();
+  State<TaskScheduleHome> createState() => _MyWidgetState();
 }
 
-class _MyWidgetState extends State<TaskscheduleHome> {
+class _MyWidgetState extends State<TaskScheduleHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,19 +18,11 @@ class _MyWidgetState extends State<TaskscheduleHome> {
           // mainAxisAlignment: MainAxisAlignment.center, // center vertically
           crossAxisAlignment: CrossAxisAlignment.center, // center horizontally
           children: [
-            SizedBox(height: 60,),
-            Container(
-              child: Center(child: Text("HI!"),),
-              width: double.infinity,
-              height: 200,
-              color: Colors.blue,
+            SizedBox(height: 100,),
+            SfCalendar(
+              view: CalendarView.day
             ),
-            Container(
-              child: Center(child: Text("data")),
-              color: Colors.pink,
-              width: double.infinity,
-              height: 550,
-            ),
+   
             Container(
               color: Colors.amber,
               width: double.infinity,

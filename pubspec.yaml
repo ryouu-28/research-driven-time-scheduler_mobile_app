@@ -37,6 +37,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.5
+  syncfusion_flutter_calendar: ^31.2.18
 
 
 dev_dependencies:
