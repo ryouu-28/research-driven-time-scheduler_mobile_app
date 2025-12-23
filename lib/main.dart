@@ -6,6 +6,9 @@ import 'package:research_driven_time_scheduler_mobile_app/models/surveyFirstMode
 // import 'package:research_drive_time_scheduler_mobile_app/pages/survey/surveyStartPage.';
 import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyStartPage.dart';
 import 'package:research_driven_time_scheduler_mobile_app/models/surveyPersonalityModel.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/userPreferencesModel.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/taskModel.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +18,8 @@ void main() async {
 
   Hive.registerAdapter(SurveyFirstAdapter());
   Hive.registerAdapter(SurveyPersonalityAdapter());
+  Hive.registerAdapter(UserPreferencesModelAdapter());
+  Hive.registerAdapter(TaskModelAdapter());
 
   runApp(const MyApp());
 }

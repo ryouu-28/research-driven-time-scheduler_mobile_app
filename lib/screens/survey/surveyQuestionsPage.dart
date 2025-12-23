@@ -1,18 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:research_driven_time_scheduler_mobile_app/models/surveyFirstModel.dart';
 import 'package:research_driven_time_scheduler_mobile_app/models/surveyPersonalityModel.dart';
-// import 'package:scheduler_prototype/pages/taskSchedule/taskScheduleHome.dart';
 import '../../screens/survey/surveyCompletePage.dart';
-import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/taskScheduleHome.dart';
 import '../../controllers/surveyController.dart';
-import '../../models/surveyFirstModel.dart';
 
 class SurveyQuestionsPage extends StatefulWidget {
-  const SurveyQuestionsPage({
-    super.key,
-    });
+  const SurveyQuestionsPage({super.key});
 
   @override
   State<SurveyQuestionsPage> createState() => _SurveyQuestionsPageState();
@@ -21,18 +15,18 @@ class SurveyQuestionsPage extends StatefulWidget {
 class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
   final SurveyFirstController controller = SurveyFirstController();
   Map<String, dynamic> quizData = {};
-  Map<String, dynamic> firstQuestions = {};
-  Map<String, int> scores = 
-  { 
-  "mood": 0, 
-  "overwhelm": 0, 
-  "reward": 0, 
-  "perfection": 0, 
-  "classic": 0, 
-  "drifter": 0 };
-  // int nextPath = 0;
+  Map<String, int> scores = { 
+    "mood": 0, 
+    "overwhelm": 0, 
+    "reward": 0, 
+    "perfection": 0, 
+    "classic": 0, 
+    "drifter": 0 
+  };
+  
   String? selectedPath;
   int currentIndex = 0;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -40,148 +34,246 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
     loadQuestions();
   }
 
-  // Load JSON from assets
   Future<void> loadQuestions() async {
-    final jsonString = await rootBundle.loadString('assets/question.json');
-    final data = jsonDecode(jsonString);
+    try {
+      final jsonString = await rootBundle.loadString('assets/question.json');
+      final data = jsonDecode(jsonString);
+      if (mounted) {
+        setState(() {
+          quizData = data;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading questions: $e');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  void addScore(Map<String, dynamic> scoreMaps) {
+    Map<String, dynamic>? scoreMap = scoreMaps["score"];
+    if (scoreMap == null) return;
+
+    scoreMap.forEach((key, value) {
+      int num = int.parse(value.toString());
+      scores[key] = (scores[key] ?? 0) + num;
+    });
+    
+    // Remove excessive printing - only print final scores
+    print('Current scores updated: $scores');
+  }
+
+  void selectRoot(Map<String, dynamic> opt) {
     setState(() {
-      quizData = data;
+      addScore(opt);
+      selectedPath = opt["nextPath"];
+      currentIndex = 0; // Reset index for new path
     });
   }
 
-  Future<void> loadFirstQuestions() async {
-    final jsonString = await rootBundle.loadString('assets/firstQuestion.json');
-    final data = jsonDecode(jsonString);
-    setState(() {
-      firstQuestions = data;
-    });
+  Future<void> checkPersonality() async {
+    try {
+      int maxValue = scores.values.reduce((a, b) => a > b ? a : b);
+
+      List<String> highestTypes = scores.entries
+          .where((e) => e.value == maxValue)
+          .map((e) => e.key)
+          .toList();
+
+      bool tie = highestTypes.length > 1;
+      String personalityResult = tie ? "classic" : highestTypes[0];
+      
+      print('Final Personality: $personalityResult');
+
+      final userPersonality = SurveyPersonality(personality: personalityResult);
+      await controller.savePersonality(userPersonality);
+    } catch (e) {
+      print('Error saving personality: $e');
+    }
   }
+
+  void selectOption(Map<String, dynamic> opt) {
+    addScore(opt);
+
+    if (selectedPath == null || quizData.isEmpty) return;
+
+    final pathQuestions = quizData["paths"][selectedPath]["questions"];
+
+    if (currentIndex < pathQuestions.length - 1) {
+      setState(() {
+        currentIndex++;
+      });
+    } else {
+      // Last question - save and navigate
+      checkPersonality().then((_) {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SurveyCompleteUpdated(),
+            ),
+          );
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    void AddScore(Map<String, dynamic> scoreMaps){
-      Map<String, dynamic>? scoreMap = scoreMaps["score"];
-      if (scoreMap == null)return;
-      // print(scoreMap);
-
-      scoreMap.forEach((key, value) {
-        int num = int.parse(value.toString());
-        scores[key] = (scores[key] ?? 0) + num;
-
-      },);
-      scores.forEach((key, value) {
-        print(key);
-        print(value);
-      },);
-
-      
-    }
-  
-    void selectRoot(Map<String, dynamic> opt){
-      print(opt);
-      print("glenn pogi");
-      AddScore(opt);
-    
-      setState(() {
-        selectedPath = opt["nextPath"];
-      });
-      
-      print(selectedPath);
-      print("Selected root option: $opt");
-      print("nextPath: ${opt["nextPath"]}");
-
-    }
-
-    void checkPersonality() async{
-        int maxValue = scores.values.reduce((a, b) => a > b ? a : b);
-
-        List<String> highestTypes = scores.entries
-        .where((e) => e.value == maxValue)
-        .map((e) => e.key)
-        .toList();
-
-        bool tie = highestTypes.length > 1;
-        print("glennmona");
-        print(tie);
-        print(highestTypes[0]);
-        if(tie){
-          final userPersonality = SurveyPersonality(personality: "classic");
-          await controller.savePersonality(userPersonality);
-        } else {
-          final userPersonality = SurveyPersonality(personality: highestTypes[0]);
-          await controller.savePersonality(userPersonality);
-        }
-        
-
-    }
-    void selectOption(Map<String, dynamic> opt) {
-      AddScore(opt);
-
-      final pathQuestions = quizData["paths"][selectedPath]["questions"];
-
-      if (currentIndex < pathQuestions.length - 1) {
-        setState(() {
-          currentIndex++;
-        });
-      } else {
-        checkPersonality();
-        Navigator.push(
-          
-          context,
-          MaterialPageRoute(
-            builder: (context) => SurveyComplete(),
-          ),
-        );
-      }
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     if (quizData.isEmpty) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Error loading questions'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: loadQuestions,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ROOT QUESTION
+    if (selectedPath == null) {
+      final root = quizData["root"];
+      final options = root["options"];
+      
+      return Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  root["question"],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 30),
+                ...options.map<Widget>((opt) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.all(16),
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => selectRoot(opt),
+                      child: Text(
+                        opt["text"],
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // PATH QUESTIONS
+    final path = quizData["paths"][selectedPath];
+    if (path == null) {
+      return const Scaffold(
+        body: Center(child: Text('Error: Path not found')),
+      );
+    }
+
+    final questions = path["questions"];
+    if (currentIndex >= questions.length) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    
-    if(selectedPath == null){
-    final root = quizData["root"];
-    final option = root["options"];
+
+    final currentQuestion = questions[currentIndex];
+    final options = currentQuestion["options"];
+
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(root["question"]),
-            ...option.map<Widget>((opt) {
-              return ElevatedButton(
-                onPressed: () => selectRoot(opt),
-                
-                child: Text(opt["text"]),
-              );
-            }).toList(),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Progress indicator
+              LinearProgressIndicator(
+                value: (currentIndex + 1) / questions.length,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Question ${currentIndex + 1} of ${questions.length}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                currentQuestion["question"],
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              ...options.map<Widget>((opt) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => selectOption(opt),
+                    child: Text(
+                      opt["text"],
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
         ),
       ),
     );
-    }
+  }
 
-    final path = quizData["paths"][selectedPath];
-    final questions = path["questions"];              
-    final currentQuestion = questions[currentIndex];  
-    final options = currentQuestion["options"];       
-
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(currentQuestion["question"]),
-            ...options.map<Widget>((opt ){
-              return OutlinedButton(onPressed: () => selectOption(opt), child: Text(opt["text"]));
-            })
-          ],
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    // Clean up if needed
+    super.dispose();
   }
 }
