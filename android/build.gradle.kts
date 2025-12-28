@@ -6,27 +6,23 @@ plugins {
 
 android {
     namespace = "com.example.research_driven_time_scheduler_mobile_app"
-    compileSdk = 34  // Updated to 34 for Android 13+
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
         applicationId = "com.example.research_driven_time_scheduler_mobile_app"
-        minSdk = 21  // Minimum for flutter_local_notifications
-        targetSdk = 34  // Updated for Android 13+
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-        
-        // Required for notifications
-        multiDexEnabled = true
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
@@ -38,8 +34,4 @@ android {
 
 flutter {
     source = "../.."
-}
-
-dependencies {
-    // No additional dependencies needed - flutter_local_notifications handles it
 }

@@ -20,7 +20,7 @@ class TaskController {
       final reminderTime = task.startTime.subtract(const Duration(minutes: 15));
       
       if (reminderTime.isAfter(DateTime.now())) {
-        await _notificationService.scheduleSimpleNotification(
+        await _notificationService.scheduleNotification(
           task.id.hashCode,
           '⏰ Task Reminder',
           '${task.title} starts in 15 minutes!',
