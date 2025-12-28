@@ -13,20 +13,28 @@ import 'services/notification.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
-  final appDocDir = await getApplicationDocumentsDirectory();
-  await Hive.initFlutter(appDocDir.path);
+  try {
+    // Initialize Hive
+    final appDocDir = await getApplicationDocumentsDirectory();
+    await Hive.initFlutter(appDocDir.path);
 
-  // Register all adapters
-  Hive.registerAdapter(SurveyFirstAdapter());
-  Hive.registerAdapter(SurveyPersonalityAdapter());
-  Hive.registerAdapter(TaskModelAdapter());
-  Hive.registerAdapter(UserPreferencesModelAdapter());
+    // Register all adapters
+    Hive.registerAdapter(SurveyFirstAdapter());
+    Hive.registerAdapter(SurveyPersonalityAdapter());
+    Hive.registerAdapter(TaskModelAdapter());
+    Hive.registerAdapter(UserPreferencesModelAdapter());
 
-  // Initialize notifications
-  final notificationService = NotificationService();
-  await notificationService.initialize();
-  await notificationService.requestPermissions();
+    print('✅ Hive initialized successfully');
+
+    // Initialize notifications
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+    await notificationService.requestPermissions();
+
+    print('✅ Notifications initialized successfully');
+  } catch (e) {
+    print('❌ Initialization error: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -66,20 +74,34 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> checkFirstTime() async {
     await Future.delayed(const Duration(seconds: 2));
-    
-    final hasPreferences = await prefsController.hasPreferences();
-    
-    if (mounted) {
-      if (hasPreferences) {
-        // User has completed survey, go to home
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const TaskScheduleHome(),
-          ),
-        );
-      } else {
-        // First time, show survey
+
+    try {
+      final hasPreferences = await prefsController.hasPreferences();
+
+      if (mounted) {
+        if (hasPreferences) {
+          // Test notification on first launch
+          final notificationService = NotificationService();
+          await notificationService.showTestNotification();
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TaskScheduleHome(),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SurveyStartpage(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error checking preferences: $e');
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

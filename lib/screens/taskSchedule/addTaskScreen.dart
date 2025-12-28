@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/taskModel.dart';
 import '../../models/userPreferencesModel.dart';
 import '../../controllers/taskController.dart';
+import '../../services/notification.dart';
 import '../../utils/surveyAnalyzer.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final TaskController taskController = TaskController();
+  final NotificationService notificationService = NotificationService();
   
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -30,6 +32,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime? endTime;
   int priority = 2;
   String category = 'Study';
+  bool scheduleNotification = true;
 
   final List<String> categories = [
     'Study',
@@ -45,6 +48,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void initState() {
     super.initState();
     _setDefaultTimes();
+    scheduleNotification = widget.preferences.needsReminders;
   }
 
   void _setDefaultTimes() {
@@ -81,7 +85,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             picked.hour,
             picked.minute,
           );
-          // Auto-adjust end time
           if (endTime!.isBefore(startTime!)) {
             endTime = startTime!.add(
               Duration(minutes: widget.preferences.recommendedTaskDuration),
@@ -127,16 +130,39 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       createdAt: DateTime.now(),
     );
 
-    await taskController.addTask(task);
+    try {
+      await taskController.addTask(task);
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task added successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+      // Schedule notification if enabled
+      if (scheduleNotification) {
+        await notificationService.scheduleTaskReminder(
+          task,
+          widget.preferences,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              scheduleNotification
+                  ? 'Task added with reminder!'
+                  : 'Task added successfully!',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -284,6 +310,28 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Notification toggle
+              SwitchListTile(
+                title: const Text('Remind me before this task'),
+                subtitle: Text(
+                  scheduleNotification
+                      ? 'You\'ll get a reminder ${widget.preferences.reminderMinutesBefore} minutes before'
+                      : 'No reminder will be scheduled',
+                ),
+                value: scheduleNotification,
+                onChanged: (value) {
+                  setState(() {
+                    scheduleNotification = value;
+                  });
+                },
+                secondary: const Icon(Icons.notifications_active),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
               const SizedBox(height: 30),
