@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../models/taskModel.dart';
 import '../../models/userPreferencesModel.dart';
 import '../../controllers/taskController.dart';
-import '../../services/notification.dart';
 import '../../utils/surveyAnalyzer.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -23,7 +22,6 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final TaskController taskController = TaskController();
-  final NotificationService notificationService = NotificationService();
   
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -131,15 +129,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
 
     try {
-      await taskController.addTask(task);
-
-      // Schedule notification if enabled
-      if (scheduleNotification) {
-        await notificationService.scheduleTaskReminder(
-          task,
-          widget.preferences,
-        );
-      }
+      // Add task with optional notification
+      await taskController.addTask(task, scheduleNotification: scheduleNotification);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -319,7 +310,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 title: const Text('Remind me before this task'),
                 subtitle: Text(
                   scheduleNotification
-                      ? 'You\'ll get a reminder ${widget.preferences.reminderMinutesBefore} minutes before'
+                      ? 'You\'ll get a reminder 15 minutes before'
                       : 'No reminder will be scheduled',
                 ),
                 value: scheduleNotification,

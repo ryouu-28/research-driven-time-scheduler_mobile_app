@@ -1,17 +1,33 @@
 import 'package:hive/hive.dart';
 import '../models/taskModel.dart';
+import '../services/notification.dart';
 
 class TaskController {
   static const String boxName = "tasksBox";
+  final NotificationService _notificationService = NotificationService();
 
   Future<Box<TaskModel>> openBox() async {
     return await Hive.openBox<TaskModel>(boxName);
   }
 
-  // Create new task
-  Future<void> addTask(TaskModel task) async {
+  // Create new task with optional notification
+  Future<void> addTask(TaskModel task, {bool scheduleNotification = false}) async {
     final box = await openBox();
     await box.put(task.id, task);
+    
+    // Schedule notification if requested and task is in the future
+    if (scheduleNotification && task.startTime.isAfter(DateTime.now())) {
+      final reminderTime = task.startTime.subtract(const Duration(minutes: 15));
+      
+      if (reminderTime.isAfter(DateTime.now())) {
+        await _notificationService.scheduleSimpleNotification(
+          task.id.hashCode,
+          '⏰ Task Reminder',
+          '${task.title} starts in 15 minutes!',
+          reminderTime,
+        );
+      }
+    }
   }
 
   // Get all tasks
@@ -66,6 +82,11 @@ class TaskController {
     if (task != null) {
       task.isCompleted = !task.isCompleted;
       await task.save();
+      
+      // Cancel notification when task is completed
+      if (task.isCompleted) {
+        await _notificationService.cancelNotification(taskId.hashCode);
+      }
     }
   }
 
@@ -73,6 +94,9 @@ class TaskController {
   Future<void> deleteTask(String taskId) async {
     final box = await openBox();
     await box.delete(taskId);
+    
+    // Cancel notification when task is deleted
+    await _notificationService.cancelNotification(taskId.hashCode);
   }
 
   // Get task count for date
@@ -91,6 +115,7 @@ class TaskController {
   Future<void> clearAllTasks() async {
     final box = await openBox();
     await box.clear();
+    await _notificationService.cancelAllNotifications();
   }
 
   // Get task by ID

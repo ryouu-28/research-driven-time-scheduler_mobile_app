@@ -3,37 +3,41 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'models/surveyFirstModel.dart';
 import 'models/surveyPersonalityModel.dart';
-import 'models/taskModel.dart';
-import 'models/userPreferencesModel.dart';
-import 'screens/survey/surveyStartPage.dart';
-import 'screens/taskSchedule/taskScheduleHome.dart';
-import 'controllers/preferencesController.dart';
 import 'services/notification.dart';
+import 'screens/survey/surveyStartPage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  print('🚀 App starting...');
+
+  // Initialize Hive
   try {
-    // Initialize Hive
     final appDocDir = await getApplicationDocumentsDirectory();
     await Hive.initFlutter(appDocDir.path);
-
-    // Register all adapters
     Hive.registerAdapter(SurveyFirstAdapter());
     Hive.registerAdapter(SurveyPersonalityAdapter());
-    Hive.registerAdapter(TaskModelAdapter());
-    Hive.registerAdapter(UserPreferencesModelAdapter());
-
-    print('✅ Hive initialized successfully');
-
-    // Initialize notifications
-    final notificationService = NotificationService();
-    await notificationService.initialize();
-    await notificationService.requestPermissions();
-
-    print('✅ Notifications initialized successfully');
+    print('✅ Hive initialized');
   } catch (e) {
-    print('❌ Initialization error: $e');
+    print('❌ Hive error: $e');
+  }
+
+  // Initialize Notifications
+  try {
+    final notif = NotificationService();
+    await notif.initialize();
+    print('✅ Notification service initialized');
+    
+    final granted = await notif.requestPermissions();
+    print('✅ Notification permissions: $granted');
+    
+    // Test notification after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      notif.showTestNotification();
+    });
+  } catch (e) {
+    print('❌ Notification error: $e');
+    print('Error details: ${e.toString()}');
   }
 
   runApp(const MyApp());
@@ -51,127 +55,92 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      home: const NotificationTestScreen(),
     );
   }
 }
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  final PreferencesController prefsController = PreferencesController();
-
-  @override
-  void initState() {
-    super.initState();
-    checkFirstTime();
-  }
-
-  Future<void> checkFirstTime() async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    try {
-      final hasPreferences = await prefsController.hasPreferences();
-
-      if (mounted) {
-        if (hasPreferences) {
-          // Test notification on first launch
-          final notificationService = NotificationService();
-          await notificationService.showTestNotification();
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TaskScheduleHome(),
-            ),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SurveyStartpage(),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print('❌ Error checking preferences: $e');
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SurveyStartpage(),
-          ),
-        );
-      }
-    }
-  }
+class NotificationTestScreen extends StatelessWidget {
+  const NotificationTestScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade400,
-              Colors.blue.shade700,
-            ],
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(30),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
+      appBar: AppBar(
+        title: const Text('Notification Test'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.notifications_active,
+              size: 100,
+              color: Colors.blue,
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'Notification Service',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Check console for initialization status',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 50),
+            ElevatedButton.icon(
+              onPressed: () async {
+                try {
+                  final notif = NotificationService();
+                  await notif.showTestNotification();
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✅ Notification sent! Check your notification panel.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('❌ Button error: $e');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ Error: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.send),
+              label: const Text('Send Test Notification'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
                 ),
-                child: const Icon(
-                  Icons.schedule,
-                  size: 80,
-                  color: Colors.blue,
-                ),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
               ),
-              const SizedBox(height: 30),
-              const Text(
-                'Time Scheduler',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Personalized time management',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 50),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SurveyStartpage(),
+                  ),
+                );
+              },
+              child: const Text('Continue to Survey'),
+            ),
+          ],
         ),
       ),
     );

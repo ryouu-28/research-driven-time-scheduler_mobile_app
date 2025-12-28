@@ -1,8 +1,4 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz;
-import '../models/taskModel.dart';
-import '../models/userPreferencesModel.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -18,13 +14,6 @@ class NotificationService {
     if (_initialized) return;
 
     try {
-      // Initialize timezone data
-      tz.initializeTimeZones();
-      
-      // Get local timezone
-      final String timeZoneName = DateTime.now().timeZoneName;
-      tz.setLocalLocation(tz.getLocation('Asia/Manila')); // Change to your timezone
-
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -55,151 +44,53 @@ class NotificationService {
 
   void onNotificationTap(NotificationResponse notificationResponse) {
     print('Notification tapped: ${notificationResponse.payload}');
-    // Handle notification tap - navigate to task detail
   }
 
   Future<bool> requestPermissions() async {
     try {
-      // Android 13+ permissions
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          flutterLocalNotificationsPlugin
+      bool granted = false;
+
+      if (flutterLocalNotificationsPlugin
               .resolvePlatformSpecificImplementation<
-                  AndroidFlutterLocalNotificationsPlugin>();
+                  AndroidFlutterLocalNotificationsPlugin>() !=
+          null) {
+        final AndroidFlutterLocalNotificationsPlugin androidImplementation =
+            flutterLocalNotificationsPlugin
+                .resolvePlatformSpecificImplementation<
+                    AndroidFlutterLocalNotificationsPlugin>()!;
 
-      final bool? grantedAndroid =
-          await androidImplementation?.requestNotificationsPermission();
+        final bool? grantedAndroid =
+            await androidImplementation.requestNotificationsPermission();
+        granted = grantedAndroid ?? false;
+        print('📱 Android notification permission: $granted');
+      }
 
-      // iOS permissions
-      final DarwinFlutterLocalNotificationsPlugin? iosImplementation =
-          flutterLocalNotificationsPlugin
+      if (flutterLocalNotificationsPlugin
               .resolvePlatformSpecificImplementation<
-                  DarwinFlutterLocalNotificationsPlugin>();
+                  IOSFlutterLocalNotificationsPlugin>() !=
+          null) {
+        final IOSFlutterLocalNotificationsPlugin iosImplementation =
+            flutterLocalNotificationsPlugin
+                .resolvePlatformSpecificImplementation<
+                    IOSFlutterLocalNotificationsPlugin>()!;
 
-      final bool? grantedIOS = await iosImplementation?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+        final bool? grantedIOS = await iosImplementation.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        granted = grantedIOS ?? false;
+        print('📱 iOS notification permission: $granted');
+      }
 
-      print('📱 Notification permissions: Android: $grantedAndroid, iOS: $grantedIOS');
-      return grantedAndroid ?? grantedIOS ?? false;
+      return granted;
     } catch (e) {
       print('❌ Error requesting permissions: $e');
       return false;
     }
   }
 
-  Future<void> scheduleTaskReminder(
-    TaskModel task,
-    UserPreferencesModel preferences,
-  ) async {
-    if (!preferences.needsReminders) {
-      print('⏭️ Reminders disabled by user');
-      return;
-    }
-
-    try {
-      final reminderTime = task.startTime.subtract(
-        Duration(minutes: preferences.reminderMinutesBefore),
-      );
-
-      // Only schedule if reminder time is in the future
-      if (reminderTime.isBefore(DateTime.now())) {
-        print('⏭️ Reminder time is in the past, skipping');
-        return;
-      }
-
-      final tz.TZDateTime scheduledDate = tz.TZDateTime.from(
-        reminderTime,
-        tz.local,
-      );
-
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        task.id.hashCode, // Unique ID
-        '⏰ Task Reminder',
-        '${task.title} starts in ${preferences.reminderMinutesBefore} minutes!',
-        scheduledDate,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'task_reminders',
-            'Task Reminders',
-            channelDescription: 'Notifications for upcoming tasks',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-            playSound: true,
-            enableVibration: true,
-          ),
-          iOS: const DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: task.id,
-      );
-
-      print('✅ Scheduled reminder for: ${task.title} at $reminderTime');
-    } catch (e) {
-      print('❌ Error scheduling task reminder: $e');
-    }
-  }
-
-  Future<void> scheduleDailyMorningDigest(
-    UserPreferencesModel preferences,
-  ) async {
-    if (!preferences.needsReminders) return;
-
-    try {
-      // Schedule for 8 AM daily
-      final now = DateTime.now();
-      var scheduledDate = DateTime(now.year, now.month, now.day, 8, 0);
-
-      if (scheduledDate.isBefore(now)) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
-      }
-
-      final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(
-        scheduledDate,
-        tz.local,
-      );
-
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        0, // Fixed ID for daily digest
-        '🌅 Good Morning!',
-        preferences.motivationalMessage,
-        scheduledTZ,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_digest',
-            'Daily Digest',
-            channelDescription: 'Daily morning motivational message',
-            importance: Importance.high,
-            priority: Priority.high,
-            playSound: true,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-
-      print('✅ Scheduled daily morning digest');
-    } catch (e) {
-      print('❌ Error scheduling morning digest: $e');
-    }
-  }
-
-  Future<void> showInstantNotification(String title, String body) async {
+  Future<void> showNotification(String title, String body) async {
     try {
       await flutterLocalNotificationsPlugin.show(
         DateTime.now().millisecondsSinceEpoch % 100000,
@@ -222,16 +113,56 @@ class NotificationService {
           ),
         ),
       );
-      print('✅ Instant notification shown: $title');
+      print('✅ Notification shown: $title');
     } catch (e) {
       print('❌ Error showing notification: $e');
     }
   }
 
-  Future<void> cancelTaskReminder(String taskId) async {
+  Future<void> scheduleNotification(
+    int id,
+    String title,
+    String body,
+    DateTime scheduledTime,
+  ) async {
     try {
-      await flutterLocalNotificationsPlugin.cancel(taskId.hashCode);
-      print('✅ Cancelled reminder for task: $taskId');
+      if (scheduledTime.isBefore(DateTime.now())) {
+        print('⏭️ Scheduled time is in the past, showing instant notification');
+        await showNotification(title, body);
+        return;
+      }
+
+      await flutterLocalNotificationsPlugin.periodicallyShow(
+        id,
+        title,
+        body,
+        RepeatInterval.everyMinute,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'scheduled_notifications',
+            'Scheduled Notifications',
+            channelDescription: 'Scheduled task notifications',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+      );
+      
+      print('✅ Scheduled notification for: $scheduledTime');
+    } catch (e) {
+      print('❌ Error scheduling notification: $e');
+    }
+  }
+
+  Future<void> cancelNotification(int id) async {
+    try {
+      await flutterLocalNotificationsPlugin.cancel(id);
+      print('✅ Cancelled notification: $id');
     } catch (e) {
       print('❌ Error cancelling notification: $e');
     }
@@ -246,9 +177,8 @@ class NotificationService {
     }
   }
 
-  // Test notification
   Future<void> showTestNotification() async {
-    await showInstantNotification(
+    await showNotification(
       '🎉 Test Notification',
       'Your notifications are working perfectly!',
     );
