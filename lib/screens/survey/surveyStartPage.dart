@@ -6,9 +6,9 @@ import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyF
 
 class SurveyStartpage extends StatelessWidget {
   const SurveyStartpage({super.key});
-
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       body: Center(
         child: Column(

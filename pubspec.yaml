@@ -18,10 +18,10 @@ dependencies:
   path_provider: ^2.1.5
   
   # Calendar
-  syncfusion_flutter_calendar: 28.1.37
+  syncfusion_flutter_calendar: 29.0.0
   
   # Notifications
-  flutter_local_notifications: ^17.2.03
+  flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
   
   # Date formatting

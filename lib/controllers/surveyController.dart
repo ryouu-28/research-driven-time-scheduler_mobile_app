@@ -28,7 +28,7 @@ class SurveyFirstController {
     }
   }
 
-  /// Get all answers
+  /// Get all answers on First Question / app behavior
   Future<List<SurveyFirst>> getAllAnswers() async {
     final box = await openBox();
     return box.values.toList();
@@ -51,6 +51,8 @@ class SurveyFirstController {
     final box = await openBox();
     await box.clear();
   }
+
+
  Future<Box<SurveyPersonality>> openPersonalityBox() async {
     return await Hive.openBox<SurveyPersonality>(personalityBox);
   }
