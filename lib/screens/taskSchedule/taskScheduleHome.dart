@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart' hide CalendarSelectionDetails;
 import '../../controllers/taskController.dart';
 import '../../controllers/preferencesController.dart';
 import '../../models/taskModel.dart';
