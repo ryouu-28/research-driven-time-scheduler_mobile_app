@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 // import 'package:scheduler_prototype/pages/survey/surveyQuestionsPage.dart';
-import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyQuestionsPage.dart';
 import 'package:research_driven_time_scheduler_mobile_app/screens/survey/surveyFirstQuestionPage.dart';
 
 

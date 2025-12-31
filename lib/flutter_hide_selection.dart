@@ -1,1 +1,1 @@
-export 'package:flutter/widgets.dart' hide SelectionDetails;
+export 'package:flutter/material.dart' hide SelectionDetails;

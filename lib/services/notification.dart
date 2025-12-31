@@ -151,6 +151,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
       
       print('✅ Scheduled notification for: $scheduledTime');

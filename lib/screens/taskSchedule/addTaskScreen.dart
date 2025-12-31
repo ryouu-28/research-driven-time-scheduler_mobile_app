@@ -227,7 +227,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
               // Category
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(),
