@@ -1,3 +1,6 @@
+import 'package:research_driven_time_scheduler_mobile_app/models/userPreferencesModel.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/taskModel.dart';
+
 import 'flutter_hide_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart' as syncfusion_calendar;
@@ -19,6 +22,8 @@ void main() async {
     await Hive.initFlutter(appDocDir.path);
     Hive.registerAdapter(SurveyFirstAdapter());
     Hive.registerAdapter(SurveyPersonalityAdapter());
+    Hive.registerAdapter(TaskModelAdapter());
+    Hive.registerAdapter(UserPreferencesModelAdapter());
     print('✅ Hive initialized');
   } catch (e) {
     print('❌ Hive error: $e');
