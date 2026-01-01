@@ -155,46 +155,59 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
       final root = quizData["root"];
       final options = root["options"];
       
-      return Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  root["question"],
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 30),
-                ...options.map<Widget>((opt) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.all(16),
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => selectRoot(opt),
-                      child: Text(
-                        opt["text"],
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ],
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              "assets/background.png", // your PNG path
+              fit: BoxFit.cover,       // makes it fill the screen
             ),
           ),
-        ),
-      );
-    }
+
+          // Your existing SafeArea + Padding + Column
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    root["question"],
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
+                  ...options.map<Widget>((opt) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
+                          backgroundColor: Color(0xFFD9D9D9),
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: () => selectRoot(opt),
+                        child: Text(
+                          opt["text"],
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+        }
 
     // PATH QUESTIONS
     final path = quizData["paths"][selectedPath];
@@ -222,7 +235,6 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Progress indicator
               LinearProgressIndicator(
                 value: (currentIndex + 1) / questions.length,
                 backgroundColor: Colors.grey.shade200,
@@ -273,7 +285,6 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
 
   @override
   void dispose() {
-    // Clean up if needed
     super.dispose();
   }
 }

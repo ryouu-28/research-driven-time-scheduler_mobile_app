@@ -68,28 +68,67 @@ Widget build(BuildContext context) {
   final surveyQuestions = quizQuestions["survey"][currentIndex];
   final answers = surveyQuestions["options"];
   final idQuestion = surveyQuestions["id"];
-
   return Scaffold(
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(surveyQuestions["question"]),
-
-          const SizedBox(width: 20),
-
-         ...answers.map<Widget>((opt) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: ElevatedButton(
-              onPressed: () => nextQuestion(opt, idQuestion),
-              child: Text(opt),
-            ),
-          );
-        }).toList(),
-        ],
+  body: Stack(
+    children: [
+      Positioned.fill(
+        child: Image.asset(
+          "assets/background.png",
+          fit: BoxFit.cover, // fills screen proportionally
+        ),
       ),
-    ),
-  );
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+                  Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 350), // limit width
+             
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 25.0, horizontal: 15.0),
+              decoration: BoxDecoration( 
+                color: const Color(0x99D9D9D9), 
+              borderRadius: BorderRadius.circular(12)),
+                child: Text(
+                  surveyQuestions["question"],
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+
+
+            const SizedBox(height: 20),
+            ...answers.map<Widget>((opt) {
+              return Column(
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(200, 50),
+                      foregroundColor: Colors.black,
+                      backgroundColor: const Color(0xFFD9D9D9),
+                    ),
+                    onPressed: () => nextQuestion(opt, idQuestion),
+                    child: Text(opt),
+                  ),
+                  const SizedBox(height: 15), // space after each button
+                ],
+              );
+            }).toList(),
+
+             
+          ],
+
+        ),
+      ),
+    ],
+  ),
+);
 }
 }
