@@ -1,134 +1,131 @@
 import 'package:hive/hive.dart';
 import '../models/taskModel.dart';
-import '../services/notification.dart';
+import '../services/notificationService.dart';
 
 class TaskController {
   static const String boxName = "tasksBox";
   final NotificationService _notificationService = NotificationService();
 
-  Future<Box<TaskModel>> openBox() async {
-    return await Hive.openBox<TaskModel>(boxName);
+  Future<Box<Task>> openBox() async {
+    return await Hive.openBox<Task>(boxName);
   }
 
-  // Create new task with optional notification
-  Future<void> addTask(TaskModel task, {bool scheduleNotification = false}) async {
+  Future<void> createTask(Task task) async {
     final box = await openBox();
     await box.put(task.id, task);
-    
-    // Schedule notification if requested and task is in the future
-    if (scheduleNotification && task.startTime.isAfter(DateTime.now())) {
-      final reminderTime = task.startTime.subtract(const Duration(minutes: 15));
-      
-      if (reminderTime.isAfter(DateTime.now())) {
-        await _notificationService.scheduleNotification(
-          task.id.hashCode,
-          '⏰ Task Reminder',
-          '${task.title} starts in 15 minutes!',
-          reminderTime,
-        );
-      }
+
+    if (task.hasNotification && task.notificationTime != null) {
+      await scheduleTaskNotification(task);
     }
   }
 
-  // Get all tasks
-  Future<List<TaskModel>> getAllTasks() async {
+  Future<void> updateTask(Task task) async {
+    final box = await openBox();
+    await box.put(task.id, task);
+
+    if (task.hasNotification && task.notificationTime != null) {
+      if (task.notificationId != null) {
+        await _notificationService.cancelNotification(task.notificationId!);
+      }
+      await scheduleTaskNotification(task);
+    } else if (task.notificationId != null) {
+      await _notificationService.cancelNotification(task.notificationId!);
+    }
+  }
+
+  Future<void> deleteTask(String taskId) async {
+    final box = await openBox();
+    final task = box.get(taskId);
+    
+    if (task != null && task.notificationId != null) {
+      await _notificationService.cancelNotification(task.notificationId!);
+    }
+    
+    await box.delete(taskId);
+  }
+
+  Future<List<Task>> getAllTasks() async {
     final box = await openBox();
     return box.values.toList();
   }
 
-  // Get tasks for specific date
-  Future<List<TaskModel>> getTasksForDate(DateTime date) async {
+  Future<List<Task>> getTasksForDate(DateTime date) async {
     final box = await openBox();
     return box.values.where((task) {
       return task.startTime.year == date.year &&
-          task.startTime.month == date.month &&
-          task.startTime.day == date.day;
+             task.startTime.month == date.month &&
+             task.startTime.day == date.day;
     }).toList();
   }
 
-  // Get today's tasks
-  Future<List<TaskModel>> getTodayTasks() async {
-    return await getTasksForDate(DateTime.now());
-  }
-
-  // Get upcoming tasks
-  Future<List<TaskModel>> getUpcomingTasks() async {
+  Future<List<Task>> getCompletedTasks() async {
     final box = await openBox();
-    final now = DateTime.now();
-    return box.values.where((task) {
-      return task.startTime.isAfter(now) && !task.isCompleted;
-    }).toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    return box.values.where((task) => task.isCompleted).toList();
   }
 
-  // Get overdue tasks
-  Future<List<TaskModel>> getOverdueTasks() async {
-    final box = await openBox();
-    final now = DateTime.now();
-    return box.values.where((task) {
-      return task.endTime.isBefore(now) && !task.isCompleted;
-    }).toList();
-  }
-
-  // Update task
-  Future<void> updateTask(TaskModel task) async {
-    await task.save();
-  }
-
-  // Toggle task completion
   Future<void> toggleTaskCompletion(String taskId) async {
     final box = await openBox();
     final task = box.get(taskId);
+    
     if (task != null) {
       task.isCompleted = !task.isCompleted;
       await task.save();
       
-      // Cancel notification when task is completed
-      if (task.isCompleted) {
-        await _notificationService.cancelNotification(taskId.hashCode);
+      if (task.isCompleted && task.notificationId != null) {
+        await _notificationService.cancelNotification(task.notificationId!);
       }
     }
   }
 
-  // Delete task
-  Future<void> deleteTask(String taskId) async {
-    final box = await openBox();
-    await box.delete(taskId);
-    
-    // Cancel notification when task is deleted
-    await _notificationService.cancelNotification(taskId.hashCode);
+  Future<void> scheduleTaskNotification(Task task) async {
+    if (task.notificationTime == null) return;
+
+    final notificationId = task.generateNotificationId();
+    task.notificationId = notificationId;
+
+    await _notificationService.scheduleNotification(
+      id: notificationId,
+      title: 'Task Reminder: ${task.title}',
+      body: task.description,
+      scheduledTime: task.notificationTime!,
+      payload: task.id,
+    );
+
+    await task.save();
   }
 
-  // Get task count for date
-  Future<int> getTaskCountForDate(DateTime date) async {
-    final tasks = await getTasksForDate(date);
-    return tasks.length;
-  }
-
-  // Get completed task count for date
-  Future<int> getCompletedTaskCountForDate(DateTime date) async {
-    final tasks = await getTasksForDate(date);
-    return tasks.where((task) => task.isCompleted).length;
-  }
-
-  // Clear all tasks (for testing)
   Future<void> clearAllTasks() async {
     final box = await openBox();
+    
+    for (var task in box.values) {
+      if (task.notificationId != null) {
+        await _notificationService.cancelNotification(task.notificationId!);
+      }
+    }
+    
     await box.clear();
-    await _notificationService.cancelAllNotifications();
   }
 
-  // Get task by ID
-  Future<TaskModel?> getTaskById(String taskId) async {
+  Future<Map<String, int>> getTaskCountByPriority() async {
     final box = await openBox();
-    return box.get(taskId);
+    final tasks = box.values.where((task) => !task.isCompleted).toList();
+    
+    return {
+      'high': tasks.where((t) => t.priority == 'high').length,
+      'medium': tasks.where((t) => t.priority == 'medium').length,
+      'low': tasks.where((t) => t.priority == 'low').length,
+    };
   }
 
-  // Get completion rate for today
-  Future<double> getTodayCompletionRate() async {
-    final tasks = await getTodayTasks();
-    if (tasks.isEmpty) return 0.0;
-    final completed = tasks.where((t) => t.isCompleted).length;
-    return (completed / tasks.length) * 100;
+  Future<Map<String, int>> getTaskCountByCategory() async {
+    final box = await openBox();
+    final tasks = box.values.where((task) => !task.isCompleted).toList();
+    
+    final categories = <String, int>{};
+    for (var task in tasks) {
+      categories[task.category] = (categories[task.category] ?? 0) + 1;
+    }
+    
+    return categories;
   }
 }

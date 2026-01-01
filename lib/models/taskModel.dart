@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 part 'taskModel.g.dart';
 
 @HiveType(typeId: 4)
-class TaskModel extends HiveObject {
+class Task extends HiveObject {
   @HiveField(0)
   String id;
 
@@ -20,48 +20,38 @@ class TaskModel extends HiveObject {
   DateTime endTime;
 
   @HiveField(5)
-  int priority; // 1 = Low, 2 = Medium, 3 = High
-
-  @HiveField(6)
   bool isCompleted;
 
+  @HiveField(6)
+  String priority; // 'high', 'medium', 'low'
+
   @HiveField(7)
-  String category;
+  String category; // 'work', 'personal', 'study', etc.
 
   @HiveField(8)
-  DateTime createdAt;
+  bool hasNotification;
 
-  TaskModel({
+  @HiveField(9)
+  int? notificationId;
+
+  @HiveField(10)
+  DateTime? notificationTime;
+
+  Task({
     required this.id,
     required this.title,
     required this.description,
     required this.startTime,
     required this.endTime,
-    this.priority = 2,
     this.isCompleted = false,
-    this.category = 'Study',
-    required this.createdAt,
+    this.priority = 'medium',
+    this.category = 'personal',
+    this.hasNotification = false,
+    this.notificationId,
+    this.notificationTime,
   });
 
-  // Helper method to get priority label
-  String get priorityLabel {
-    switch (priority) {
-      case 1:
-        return 'Low';
-      case 2:
-        return 'Medium';
-      case 3:
-        return 'High';
-      default:
-        return 'Medium';
-    }
-  }
-
-  bool get isOverdue {
-    return !isCompleted && DateTime.now().isAfter(endTime);
-  }
-  
-  int get durationInMinutes {
-    return endTime.difference(startTime).inMinutes;
+  int generateNotificationId() {
+    return DateTime.now().millisecondsSinceEpoch.remainder(100000);
   }
 }

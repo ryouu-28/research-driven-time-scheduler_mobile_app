@@ -6,33 +6,35 @@ part of 'taskModel.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TaskModelAdapter extends TypeAdapter<TaskModel> {
+class TaskAdapter extends TypeAdapter<Task> {
   @override
   final int typeId = 4;
 
   @override
-  TaskModel read(BinaryReader reader) {
+  Task read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return TaskModel(
+    return Task(
       id: fields[0] as String,
       title: fields[1] as String,
       description: fields[2] as String,
       startTime: fields[3] as DateTime,
       endTime: fields[4] as DateTime,
-      priority: fields[5] as int,
-      isCompleted: fields[6] as bool,
+      isCompleted: fields[5] as bool,
+      priority: fields[6] as String,
       category: fields[7] as String,
-      createdAt: fields[8] as DateTime,
+      hasNotification: fields[8] as bool,
+      notificationId: fields[9] as int?,
+      notificationTime: fields[10] as DateTime?,
     );
   }
 
   @override
-  void write(BinaryWriter writer, TaskModel obj) {
+  void write(BinaryWriter writer, Task obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,13 +46,17 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       ..writeByte(4)
       ..write(obj.endTime)
       ..writeByte(5)
-      ..write(obj.priority)
-      ..writeByte(6)
       ..write(obj.isCompleted)
+      ..writeByte(6)
+      ..write(obj.priority)
       ..writeByte(7)
       ..write(obj.category)
       ..writeByte(8)
-      ..write(obj.createdAt);
+      ..write(obj.hasNotification)
+      ..writeByte(9)
+      ..write(obj.notificationId)
+      ..writeByte(10)
+      ..write(obj.notificationTime);
   }
 
   @override
@@ -59,7 +65,7 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TaskModelAdapter &&
+      other is TaskAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
