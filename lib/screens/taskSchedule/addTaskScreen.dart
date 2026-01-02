@@ -4,6 +4,7 @@ import '../../models/taskModel.dart';
 import '../../models/userPreferencesModel.dart';
 import '../../controllers/taskController.dart';
 import '../../utils/surveyAnalyzer.dart';
+import '../../services/notification.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final UserPreferencesModel preferences;
@@ -22,7 +23,7 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final TaskController taskController = TaskController();
-  
+  final NotificationService notificationService = NotificationService();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   
@@ -100,7 +101,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
-  Future<void> _saveTask() async {
+    Future<void> _saveTask() async {
     if (!_formKey.currentState!.validate()) return;
     if (startTime == null || endTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -129,10 +130,39 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
     await taskController.addTask(task);
 
+    // ✅ NEW: Schedule notification if user wants reminders
+
+    print('📝 Adding task: ${task.title}'); 
+    print('🔍 needsReminders = ${widget.preferences.needsReminders}');
+    if (widget.preferences.needsReminders) {
+      try {
+        final reminderTime = startTime!.subtract(
+          Duration(minutes: widget.preferences.reminderMinutesBefore)
+        );
+        print('🔍 reminderTime = $reminderTime, now = ${DateTime.now()}');
+        
+        // Only schedule if reminder time is in the future
+        if (reminderTime.isAfter(DateTime.now())) {
+          await notificationService.scheduleNotification(
+            task.id.hashCode,
+            '⏰ Task Reminder',
+            'Your task "${task.title}" starts in ${widget.preferences.reminderMinutesBefore} minutes!',
+            reminderTime,
+          );
+          
+          print('✅TITE Notification scheduled for: $reminderTime');
+        }
+      } catch (e) {
+        print('❌ Error scheduling notification: $e');
+      }} else { print('⏭️ Reminder time is in the past, skipping notification'); 
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task added successfully!'),
+        SnackBar(
+          content: Text(widget.preferences.needsReminders 
+            ? 'Task added with reminder!' 
+            : 'Task added successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -347,4 +377,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     descriptionController.dispose();
     super.dispose();
   }
+
+  
+
 }
+

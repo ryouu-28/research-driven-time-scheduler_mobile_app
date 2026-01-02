@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/taskModel.dart';
 import '../../controllers/taskController.dart';
+import '../../services/notification.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final TaskModel task;
@@ -14,6 +15,7 @@ class TaskDetailScreen extends StatefulWidget {
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final TaskController taskController = TaskController();
+  final NotificationService notificationService = NotificationService();  
 
   @override
   Widget build(BuildContext context) {
@@ -261,7 +263,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
-  Future<void> _showDeleteDialog() async {
+   Future<void> _showDeleteDialog() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -284,7 +286,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
 
     if (confirm == true) {
+      // ✅ Cancel the notification before deleting
+      await notificationService.cancelNotification(widget.task.id.hashCode);
       await taskController.deleteTask(widget.task.id);
+      
       if (mounted) {
         Navigator.pop(context);
       }

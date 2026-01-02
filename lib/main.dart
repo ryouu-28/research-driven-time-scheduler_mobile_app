@@ -10,10 +10,12 @@ import 'screens/taskSchedule/taskScheduleHome.dart';
 import 'controllers/preferencesController.dart';
 import 'services/notification.dart';
 import 'controllers/surveyController.dart';
+import 'package:timezone/data/latest.dart' as tz; 
+import 'package:timezone/timezone.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  tz.initializeTimeZones();
   // Initialize Hive
   final appDocDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocDir.path);
