@@ -39,21 +39,22 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkUserStatus() async {
     await Future.delayed(const Duration(seconds: 3));
-    
+    print("TITE");
     final controller = SurveyFirstController();
-    final personality = await controller.getPersonality();
-    
+    final answers = await controller.getAllAnswers();
+    print("TITE ${answers.length}");
+    print("TITE2");
     if (!mounted) return;
-    
-    if (personality != null) {
+
+    if (answers.isEmpty) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const TaskScheduleHome()),
+        MaterialPageRoute(builder: (context) => const SurveyStartpage()),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const SurveyStartpage()),
+        MaterialPageRoute(builder: (context) => const TaskScheduleHome()),
       );
     }
   }

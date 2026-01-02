@@ -30,7 +30,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime? endTime;
   int priority = 2;
   String category = 'Study';
-  bool scheduleNotification = true;
 
   final List<String> categories = [
     'Study',
@@ -46,7 +45,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void initState() {
     super.initState();
     _setDefaultTimes();
-    scheduleNotification = widget.preferences.needsReminders;
   }
 
   void _setDefaultTimes() {
@@ -83,6 +81,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             picked.hour,
             picked.minute,
           );
+          // Auto-adjust end time
           if (endTime!.isBefore(startTime!)) {
             endTime = startTime!.add(
               Duration(minutes: widget.preferences.recommendedTaskDuration),
@@ -128,32 +127,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       createdAt: DateTime.now(),
     );
 
-    try {
-      // Add task with optional notification
-      await taskController.addTask(task, scheduleNotification: scheduleNotification);
+    await taskController.addTask(task);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              scheduleNotification
-                  ? 'Task added with reminder!'
-                  : 'Task added successfully!',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task added successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
     }
   }
 
@@ -161,11 +144,22 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Task'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        title: const Text('Create New Task', style: TextStyle(
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),),
+        backgroundColor: Color(0xFFD9D9D9),
+        foregroundColor: Colors.black,
       ),
-      body: SingleChildScrollView(
+      body: Container(
+        decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/images/background.png"), 
+          fit: BoxFit.cover, 
+        ),
+      ),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
@@ -217,7 +211,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               TextFormField(
                 controller: descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Description',
+                  labelText: 'Description (optional)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.description),
                 ),
@@ -227,7 +221,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
               // Category
               DropdownButtonFormField<String>(
-                initialValue: category,
+                value: category,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(),
@@ -288,7 +282,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: const Color.fromARGB(113, 245, 245, 245),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -301,28 +295,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Notification toggle
-              SwitchListTile(
-                title: const Text('Remind me before this task'),
-                subtitle: Text(
-                  scheduleNotification
-                      ? 'You\'ll get a reminder 15 minutes before'
-                      : 'No reminder will be scheduled',
-                ),
-                value: scheduleNotification,
-                onChanged: (value) {
-                  setState(() {
-                    scheduleNotification = value;
-                  });
-                },
-                secondary: const Icon(Icons.notifications_active),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
               const SizedBox(height: 30),
@@ -349,7 +321,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildPriorityChip(String label, int value) {

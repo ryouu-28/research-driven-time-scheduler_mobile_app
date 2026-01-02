@@ -77,44 +77,43 @@ class NotificationService {
     await _notifications.show(id, title, body, details, payload: payload);
   }
 
-  Future<void> scheduleNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime scheduledTime,
-    String? payload,
-  }) async {
-    const androidDetails = AndroidNotificationDetails(
-      'task_reminders',
-      'Task Reminders',
-      channelDescription: 'Notifications for task reminders',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+ Future<void> scheduleNotification({
+  required int id,
+  required String title,
+  required String body,
+  required DateTime scheduledTime,
+  String? payload,
+}) async {
+  const androidDetails = AndroidNotificationDetails(
+    'task_reminders',
+    'Task Reminders',
+    channelDescription: 'Notifications for task reminders',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
 
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+  const iosDetails = DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+  );
 
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+  const details = NotificationDetails(
+    android: androidDetails,
+    iOS: iosDetails,
+  );
 
-    await _notifications.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledTime, tz.local),
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
+  await _notifications.zonedSchedule(
+    id,
+    title,
+    body,
+    tz.TZDateTime.from(scheduledTime, tz.local),
+    details,
+    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    payload: payload,  
     );
-  }
+}
+
 
   Future<void> cancelNotification(int id) async {
     await _notifications.cancel(id);

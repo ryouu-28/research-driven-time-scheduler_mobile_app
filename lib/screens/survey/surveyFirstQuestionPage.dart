@@ -73,7 +73,7 @@ Widget build(BuildContext context) {
     children: [
       Positioned.fill(
         child: Image.asset(
-          "assets/background.png",
+          "assets/images/background.png",
           fit: BoxFit.cover, // fills screen proportionally
         ),
       ),

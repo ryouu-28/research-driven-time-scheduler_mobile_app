@@ -161,12 +161,10 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              "assets/background.png", // your PNG path
+              "assets/images/background.png", // your PNG path
               fit: BoxFit.cover,       // makes it fill the screen
             ),
           ),
-
-          // Your existing SafeArea + Padding + Column
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),

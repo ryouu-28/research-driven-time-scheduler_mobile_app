@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import '../models/surveyFirstModel.dart';
 import '../models/surveyPersonalityModel.dart';
+import '../models/userPreferencesModel.dart';
 
 class SurveyFirstController {
   static const String boxName = "surveyFirstBox";
@@ -72,5 +73,8 @@ class SurveyFirstController {
   Future<void> resetAllData() async {
     await clearAll();
     await clearPersonality();
+
+    final prefsBox = await Hive.openBox<UserPreferencesModel>('userPreferencesBox'); 
+    await prefsBox.clear(); // clear preferences too
   }
 }

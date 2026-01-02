@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:research_driven_time_scheduler_mobile_app/main.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-import 'package:research_driven_time_scheduler_mobile_app/controllers/taskController.dart';
-import 'package:research_driven_time_scheduler_mobile_app/controllers/surveyController.dart';
-import 'package:research_driven_time_scheduler_mobile_app/models/taskModel.dart';
-import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/addTaskPage.dart';
-import 'package:research_driven_time_scheduler_mobile_app/screens/taskSchedule/editTaskPage.dart';
-import 'package:research_driven_time_scheduler_mobile_app/screens/statistics/statisticsPage.dart';
-import 'package:research_driven_time_scheduler_mobile_app/screens/profile/profilePage.dart';
+import '../../controllers/taskController.dart';
+import '../../controllers/preferencesController.dart';
+import '../../models/taskModel.dart';
+import '../../models/userPreferencesModel.dart';
+import 'addTaskScreen.dart';
+import 'taskDetailScreen.dart';
+import '../../controllers/surveyController.dart';
+import '../../screens/survey/surveyStartPage.dart';
+import '../../services/notification.dart';
+
 
 class TaskScheduleHome extends StatefulWidget {
   const TaskScheduleHome({super.key});
@@ -16,661 +20,432 @@ class TaskScheduleHome extends StatefulWidget {
 }
 
 class _TaskScheduleHomeState extends State<TaskScheduleHome> {
-  final TaskController _taskController = TaskController();
-  final SurveyFirstController _surveyController = SurveyFirstController();
+  final TaskController taskController = TaskController();
+  final PreferencesController prefsController = PreferencesController();
+  final SurveyFirstController surveyController = SurveyFirstController();
+  final NotificationService notificationService = NotificationService();
   
-  int _selectedIndex = 0;
-  String _userPersonality = '';
-  List<Task> _todayTasks = [];
-  List<Task> _allTasks = [];
-  bool _isLoading = true;
+  List<TaskModel> tasks = [];
+  UserPreferencesModel? preferences;
+  CalendarView currentView = CalendarView.week;
+  DateTime selectedDate = DateTime.now();
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    loadData();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    
-    final personality = await _surveyController.getPersonality();
-    final tasks = await _taskController.getAllTasks();
-    final today = DateTime.now();
-    final todayTasks = tasks.where((task) {
-      return task.startTime.year == today.year &&
-             task.startTime.month == today.month &&
-             task.startTime.day == today.day;
-    }).toList();
-
+  Future<void> loadData() async {
+    preferences = await prefsController.getPreferences();
+    tasks = await taskController.getAllTasks();
     setState(() {
-      _userPersonality = personality?.personality ?? 'classic';
-      _allTasks = tasks;
-      _todayTasks = todayTasks;
-      _isLoading = false;
+      isLoading = false;
     });
+  }
+
+  Future<void> refreshTasks() async {
+    tasks = await taskController.getAllTasks();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildBody(),
-      bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddTaskPage()),
-          );
-          _loadData();
-        },
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildHomePage();
-      case 1:
-        return _buildCalendarPage();
-      case 2:
-        return const StatisticsPage();
-      case 3:
-        return const ProfilePage();
-      default:
-        return _buildHomePage();
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
-  }
 
-  Widget _buildHomePage() {
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            floating: true,
-            expandedHeight: 120,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                  Text(
-                    'Let\'s manage your time',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Calendar'),
+        foregroundColor: Colors.black,
+        flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/images/background.png"),
+            fit: BoxFit.cover,
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPersonalityCard(),
-                  const SizedBox(height: 20),
-                  _buildTaskSummary(),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Today\'s Tasks',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-            ),
-          ),
-          _todayTasks.isEmpty
-              ? SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inbox_outlined,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No tasks for today',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap + to add a new task',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final task = _todayTasks[index];
-                      return _buildTaskCard(task);
-                    },
-                    childCount: _todayTasks.length,
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalityCard() {
-    final personalityInfo = _getPersonalityInfo(_userPersonality);
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.7),
-          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+      ),   
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.view_day),
+            onPressed: () {
+              setState(() {
+                print("Switching to day view");
+                currentView = CalendarView.day;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.view_week),
+            onPressed: () {
+              setState(() {
+                 print("Switching to week view");
+                currentView = CalendarView.week;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            onPressed: () {
+              setState(() {
+                currentView = CalendarView.month;
+              });
+            },
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Color(0xFFAEADAD),
+              ),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
             ),
-            child: Icon(
-              personalityInfo['icon'] as IconData,
-              size: 32,
-              color: Theme.of(context).colorScheme.primary,
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TaskScheduleHome()),
+                );
+              },
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your Style',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  personalityInfo['title'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskSummary() {
-    final completedCount = _todayTasks.where((t) => t.isCompleted).length;
-    final totalCount = _todayTasks.length;
-    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Daily Progress',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text("Reset Data"),
+              onTap: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirm Reset'),
+                    content: const Text(
+                      'Are you sure you want to delete all survey data? This action cannot be undone.',
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$completedCount of $totalCount tasks',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                '${(progress * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(Task task) {
-    final priorityColor = _getPriorityColor(task.priority);
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: InkWell(
-          onTap: () => _showTaskDetails(task),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: task.isCompleted,
-                  onChanged: (value) {
-                    _taskController.toggleTaskCompletion(task.id);
-                    _loadData();
-                  },
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          decoration: task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false), // cancel
+                        child: const Text('Cancel'),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            size: 14,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${_formatTime(task.startTime)} - ${_formatTime(task.endTime)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(context, true), // confirm
+                        child: const Text('Delete'),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  width: 4,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: priorityColor,
-                    borderRadius: BorderRadius.circular(2),
+                );
+
+                if (confirmed == true) {
+                  await taskController.clearAllTasks();
+                  await surveyController.resetAllData();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("✅ All survey data deleted"),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SurveyStartpage()),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              onTap: () {
+                // Navigate to settings screen
+              },
+            ),
+          ],
+        ),
+      ),
+      
+      body: Column(
+        children: [
+          // Motivational Banner
+          if (preferences != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
+              color: const Color.fromARGB(197, 99, 180, 226),
+              child: Row(
+                children: [
+                  const Icon(Icons.emoji_events, color: Colors.amber, size: 30),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      preferences!.motivationalMessage,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
+                ],
+              ),
+            ),
+          
+          // Today's Progress
+          _buildTodayProgress(),
+
+          // Calendar
+         Expanded(
+          child: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/images/background.png"),
+                fit: BoxFit.cover, // fills the space
+              ),
+            ),
+            child: SfCalendar(
+              key: ValueKey(currentView), // keeps view switching working
+              view: currentView,
+            
+              //Month Style
+              headerStyle: const CalendarHeaderStyle(
+                textStyle: TextStyle(
+                  fontSize: 15,
+                  fontFamily: 'Montserrat',
+                  fontWeight:  FontWeight.bold,
+                  backgroundColor: Color.fromARGB(43, 98, 120, 138),
+                  decorationColor: Color.fromARGB(43, 98, 120, 138),
+                ),),
+
+              viewHeaderStyle: const ViewHeaderStyle(
+                dayTextStyle: TextStyle(
+                  fontSize: 16,
+                  color: Colors.green, // day names color
+                  fontFamily: 'Montserrat',
+                ),
+                // backgroundColor: Colors.lightBlueAccent,
+              ),
+              backgroundColor: Colors.transparent,
+              dataSource: TaskDataSource(tasks),
+              onTap: (details) {
+                if (details.appointments != null && details.appointments!.isNotEmpty) {
+                  final TaskModel task = details.appointments!.first;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TaskDetailScreen(task: task),
+                    ),
+                  ).then((_) => refreshTasks());
+                }
+              },
+              monthViewSettings: const MonthViewSettings(
+                appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
+              ),
+              timeSlotViewSettings: const TimeSlotViewSettings(
+                startHour: 0,
+                endHour: 24,
+                timeInterval: Duration(minutes: 60),
+                timeIntervalHeight: 50,
+                timeTextStyle: TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'Montserrat',
+                  color: Colors.black
+                  )
+              ),
+            ),
+          ),
+        ),
+        ],
+      ),
+      floatingActionButton: Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    ElevatedButton.icon(
+        onPressed: () async {
+          // Make sure NotificationService is initialized somewhere (e.g. in main.dart)
+          await NotificationService().showNotification(
+            '🔔 Task Reminder',
+            'This is your test notification from Task Home!',
+          );
+        },
+        icon: const Icon(Icons.notifications_active),
+        label: const Text(
+          'Send Test Notification',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue, // button color
+          foregroundColor: Colors.white, // text/icon color
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+    const SizedBox(height: 10),
+    FloatingActionButton.extended(
+      onPressed: () async {
+        final todayTasks =
+            await taskController.getTasksForDate(DateTime.now());
+
+        if (preferences != null &&
+            todayTasks.length >= preferences!.maxDailyTasks) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Daily Limit Reached'),
+              content: Text(
+                'You\'ve reached your daily limit of '
+                '${preferences!.maxDailyTasks} tasks. '
+                'Consider completing existing tasks first!',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddTaskScreen(
+                          preferences: preferences!,
+                          selectedDate: selectedDate,
+                        ),
+                      ),
+                    ).then((_) => refreshTasks());
+                  },
+                  child: const Text('Add Anyway'),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCalendarPage() {
-    return Column(
-      children: [
-        AppBar(
-          title: const Text('Calendar'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-        ),
-        Expanded(
-          child: SfCalendar(
-            view: CalendarView.month,
-            firstDayOfWeek: 1,
-            dataSource: TaskDataSource(_allTasks),
-            monthViewSettings: const MonthViewSettings(
-              appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: (index) {
-        setState(() => _selectedIndex = index);
-      },
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: Theme.of(context).colorScheme.primary,
-      unselectedItemColor: Colors.grey,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Calendar',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart),
-          label: 'Stats',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
-    );
-  }// Continuation of TaskScheduleHome class...
-  
-  void _showTaskDetails(Task task) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      task.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow(
-                      Icons.description,
-                      'Description',
-                      task.description,
-                    ),
-                    _buildDetailRow(
-                      Icons.access_time,
-                      'Time',
-                      '${_formatTime(task.startTime)} - ${_formatTime(task.endTime)}',
-                    ),
-                    _buildDetailRow(
-                      Icons.flag,
-                      'Priority',
-                      task.priority.toUpperCase(),
-                    ),
-                    _buildDetailRow(
-                      Icons.category,
-                      'Category',
-                      task.category,
-                    ),
-                    if (task.hasNotification)
-                      _buildDetailRow(
-                        Icons.notifications,
-                        'Notification',
-                        'Enabled',
-                      ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditTaskPage(task: task),
-                                ),
-                              );
-                              if (result == true) {
-                                _loadData();
-                              }
-                            },
-                            icon: const Icon(Icons.edit),
-                            label: const Text('Edit'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await _taskController.deleteTask(task.id);
-                              Navigator.pop(context);
-                              _loadData();
-                            },
-                            icon: const Icon(Icons.delete),
-                            label: const Text('Delete'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddTaskScreen(
+                preferences: preferences!,
+                selectedDate: selectedDate,
               ),
-            );
-          },
+            ),
+          ).then((_) => refreshTasks());
+        }
+      },
+      icon: const Icon(Icons.add),
+      label: const Text('Create Task'),
+      backgroundColor: const Color.fromARGB(255, 11, 192, 72),
+      foregroundColor: Colors.white,
+    ),
+  ],
+),);
+}
+
+  Widget _buildTodayProgress() {
+    return FutureBuilder<List<TaskModel>>(
+      future: taskController.getTodayTasks(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        
+        final todayTasks = snapshot.data!;
+        final completed = todayTasks.where((t) => t.isCompleted).length;
+        final total = todayTasks.length;
+        final progress = total > 0 ? completed / total : 0.0;
+
+        return Container(
+          padding: const EdgeInsets.all(15),
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Today\'s Progress',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '$completed / $total tasks',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  progress == 1.0 ? Colors.green : Colors.blue,
+                ),
+                minHeight: 8,
+              ),
+            ],
+          ),
         );
       },
     );
   }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 12),
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Map<String, dynamic> _getPersonalityInfo(String personality) {
-    switch (personality.toLowerCase()) {
-      case 'mood':
-        return {
-          'title': 'Mood-Driven',
-          'icon': Icons.favorite,
-        };
-      case 'overwhelm':
-        return {
-          'title': 'Task Overwhelmed',
-          'icon': Icons.psychology,
-        };
-      case 'reward':
-        return {
-          'title': 'Reward-Seeking',
-          'icon': Icons.emoji_events,
-        };
-      case 'perfection':
-        return {
-          'title': 'Perfectionist',
-          'icon': Icons.stars,
-        };
-      case 'drifter':
-        return {
-          'title': 'Structure-Needing',
-          'icon': Icons.compass_calibration,
-        };
-      default:
-        return {
-          'title': 'Classic Procrastinator',
-          'icon': Icons.access_time,
-        };
-    }
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return Colors.red;
-      case 'medium':
-        return Colors.orange;
-      case 'low':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
 }
 
-// Calendar data source
+
 class TaskDataSource extends CalendarDataSource {
-  TaskDataSource(List<Task> tasks) {
-    appointments = tasks
-        .map((task) => Appointment(
-              startTime: task.startTime,
-              endTime: task.endTime,
-              subject: task.title,
-              color: _getColorForPriority(task.priority),
-              notes: task.description,
-            ))
-        .toList();
+  TaskDataSource(List<TaskModel> tasks) {
+    appointments = tasks;
   }
 
-  Color _getColorForPriority(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return Colors.red;
-      case 'medium':
+  @override
+  DateTime getStartTime(int index) {
+    return appointments![index].startTime;
+  }
+
+  @override
+  DateTime getEndTime(int index) {
+    return appointments![index].endTime;
+  }
+
+  @override
+  String getSubject(int index) {
+    return appointments![index].title;
+  }
+
+  @override
+  Color getColor(int index) {
+    final task = appointments![index] as TaskModel;
+    if (task.isCompleted) return Colors.green;
+    if (task.isOverdue) return Colors.red;
+    
+    switch (task.priority) {
+      case 3:
         return Colors.orange;
-      case 'low':
-        return Colors.green;
+      case 2:
+        return Colors.blue;
+      case 1:
+        return Colors.grey;
       default:
         return Colors.blue;
     }
+  }
+
+  @override
+  bool isAllDay(int index) {
+    return false;
   }
 }
