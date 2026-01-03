@@ -102,73 +102,73 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
     Future<void> _saveTask() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (startTime == null || endTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select start and end times')),
+      if (!_formKey.currentState!.validate()) return;
+      if (startTime == null || endTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select start and end times')),
+        );
+        return;
+      }
+
+      if (endTime!.isBefore(startTime!)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('End time must be after start time')),
+        );
+        return;
+      }
+
+      final task = TaskModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: titleController.text,
+        description: descriptionController.text,
+        startTime: startTime!,
+        endTime: endTime!,
+        priority: priority,
+        category: category,
+        createdAt: DateTime.now(),
       );
-      return;
-    }
 
-    if (endTime!.isBefore(startTime!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End time must be after start time')),
-      );
-      return;
-    }
+      await taskController.addTask(task);
 
-    final task = TaskModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: titleController.text,
-      description: descriptionController.text,
-      startTime: startTime!,
-      endTime: endTime!,
-      priority: priority,
-      category: category,
-      createdAt: DateTime.now(),
-    );
-
-    await taskController.addTask(task);
-
-    // ✅ NEW: Schedule notification if user wants reminders
-
-    print('📝 Adding task: ${task.title}'); 
-    print('🔍 needsReminders = ${widget.preferences.needsReminders}');
-    if (widget.preferences.needsReminders) {
-      try {
-        final reminderTime = startTime!.subtract(
+      // 🆕 ADD THIS - Schedule alarms for task start and end
+      if (widget.preferences.needsReminders) {
+        final notificationService = NotificationService();
+        
+        // Alarm for task START (15 minutes before)
+        final reminderTime = task.startTime.subtract(
           Duration(minutes: widget.preferences.reminderMinutesBefore)
         );
-        print('🔍 reminderTime = $reminderTime, now = ${DateTime.now()}');
         
-        // Only schedule if reminder time is in the future
         if (reminderTime.isAfter(DateTime.now())) {
           await notificationService.scheduleNotification(
-            task.id.hashCode,
-            '⏰ Task Reminder',
-            'Your task "${task.title}" starts in ${widget.preferences.reminderMinutesBefore} minutes!',
+            int.parse(task.id), // Unique ID for start alarm
+            '⏰ Task Starting Soon',
+            '${task.title} starts in ${widget.preferences.reminderMinutesBefore} minutes',
             reminderTime,
           );
-          
-          print('✅TITE Notification scheduled for: $reminderTime');
         }
-      } catch (e) {
-        print('❌ Error scheduling notification: $e');
-      }} else { print('⏭️ Reminder time is in the past, skipping notification'); 
-    }
+        
+        // Alarm for task END
+        if (task.endTime.isAfter(DateTime.now())) {
+          await notificationService.scheduleNotification(
+            int.parse(task.id) + 1000000, // Different ID for end alarm
+            '⏰ Task Ending',
+            '${task.title} is ending now. Time to wrap up!',
+            task.endTime,
+          );
+        }
+      }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.preferences.needsReminders 
-            ? 'Task added with reminder!' 
-            : 'Task added successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task added successfully with reminders!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
     }
-  }
 
   @override
   Widget build(BuildContext context) {

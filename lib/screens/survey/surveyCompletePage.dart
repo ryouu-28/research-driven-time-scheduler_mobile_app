@@ -3,6 +3,7 @@ import '../../controllers/surveyController.dart';
 import '../../controllers/preferencesController.dart';
 import '../../utils/surveyAnalyzer.dart';
 import '../taskSchedule/taskScheduleHome.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 class SurveyCompleteUpdated extends StatefulWidget {
   const SurveyCompleteUpdated({super.key});
@@ -41,6 +42,7 @@ class _SurveyCompleteUpdatedState extends State<SurveyCompleteUpdated> {
     // Create preferences from survey
     final preferences = SurveyAnalyzer.analyzeAnswers(answers, personality);
     await prefsController.savePreferences(preferences);
+
 
     // Build result messages
     setState(() {
@@ -106,8 +108,10 @@ class _SurveyCompleteUpdatedState extends State<SurveyCompleteUpdated> {
       ];
       isLoading = false;
     });
+    
   }
 
+ 
   Widget _buildProfileRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),

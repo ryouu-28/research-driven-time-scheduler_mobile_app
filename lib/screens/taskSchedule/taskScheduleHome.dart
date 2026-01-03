@@ -273,10 +273,11 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
     ElevatedButton.icon(
         onPressed: () async {
           // Make sure NotificationService is initialized somewhere (e.g. in main.dart)
-          await NotificationService().showNotification(
-            '🔔 Task Reminder',
-            'This is your test notification from Task Home!',
-          );
+          // await NotificationService().showNotification(
+          //   '🔔 Task Reminder',
+          //   'This is your test notification from Task Home!',
+          // );
+          await NotificationService().openExactAlarmSettings();
         },
         icon: const Icon(Icons.notifications_active),
         label: const Text(

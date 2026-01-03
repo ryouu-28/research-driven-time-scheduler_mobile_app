@@ -1,4 +1,6 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -115,9 +117,16 @@ class NotificationService {
       );
       print('✅ Notification shown: $title');
     } catch (e) {
-      print('❌ Error showing notification: $e');
-    }
+       print('❌ Error initializing notifications: $e');
+}
+
   }
+    Future<void> openExactAlarmSettings() async {
+      const intent = AndroidIntent(
+        action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+      );
+      await intent.launch();
+    }
 
   Future<void> scheduleNotification(
     int id,
@@ -156,8 +165,12 @@ class NotificationService {
       
       print('✅ Scheduled notification for: $scheduledTime');
     } catch (e) {
+          if (e is PlatformException && e.code == 'exact_alarms_not_permitted') {
+          print('⚠️ Opening exact alarm settings for user...');
+          await openExactAlarmSettings();
       print('❌ Error scheduling notification: $e');
     }
+  }
   }
 
   Future<void> cancelNotification(int id) async {
