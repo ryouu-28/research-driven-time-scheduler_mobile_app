@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:research_driven_time_scheduler_mobile_app/main.dart';
+import 'package:research_driven_time_scheduler_mobile_app/screens/about/aboutUs.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import '../../controllers/taskController.dart';
 import '../../controllers/preferencesController.dart';
@@ -10,6 +11,8 @@ import 'taskDetailScreen.dart';
 import '../../controllers/surveyController.dart';
 import '../../screens/survey/surveyStartPage.dart';
 import '../../services/notification.dart';
+import '../../screens/about/aboutUs.dart';
+
 
 
 class TaskScheduleHome extends StatefulWidget {
@@ -167,9 +170,12 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
             ),
             ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+              title: const Text('About Us'),
               onTap: () {
-                // Navigate to settings screen
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const aboutUs()),
+                );
               },
             ),
           ],
@@ -210,7 +216,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage("assets/images/background.png"),
-                fit: BoxFit.cover, // fills the space
+                fit: BoxFit.cover, 
               ),
             ),
             child: SfCalendar(
@@ -223,15 +229,16 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
                   fontSize: 15,
                   fontFamily: 'Montserrat',
                   fontWeight:  FontWeight.bold,
-                  backgroundColor: Color.fromARGB(43, 98, 120, 138),
-                  decorationColor: Color.fromARGB(43, 98, 120, 138),
+                  backgroundColor: Colors.white,
+                  decorationColor: Colors.black,
                 ),),
 
               viewHeaderStyle: const ViewHeaderStyle(
                 dayTextStyle: TextStyle(
                   fontSize: 16,
-                  color: Colors.green, // day names color
+                  color: Colors.black,
                   fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold,
                 ),
                 // backgroundColor: Colors.lightBlueAccent,
               ),
@@ -270,32 +277,32 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
       floatingActionButton: Column(
   mainAxisSize: MainAxisSize.min,
   children: [
-    ElevatedButton.icon(
-        onPressed: () async {
-          // Make sure NotificationService is initialized somewhere (e.g. in main.dart)
-          // await NotificationService().showNotification(
-          //   '🔔 Task Reminder',
-          //   'This is your test notification from Task Home!',
-          // );
-          await NotificationService().openExactAlarmSettings();
-        },
-        icon: const Icon(Icons.notifications_active),
-        label: const Text(
-          'Send Test Notification',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue, // button color
-          foregroundColor: Colors.white, // text/icon color
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
+    // ElevatedButton.icon(
+    //     onPressed: () async {
+    //       // Make sure NotificationService is initialized somewhere (e.g. in main.dart)
+    //       // await NotificationService().showNotification(
+    //       //   '🔔 Task Reminder',
+    //       //   'This is your test notification from Task Home!',
+    //       // );
+    //       await NotificationService().openExactAlarmSettings();
+    //     },
+    //     icon: const Icon(Icons.notifications_active),
+    //     label: const Text(
+    //       'Send Test Notification',
+    //       style: TextStyle(
+    //         fontFamily: 'Montserrat',
+    //         fontWeight: FontWeight.w600,
+    //       ),
+    //     ),
+    //     style: ElevatedButton.styleFrom(
+    //       backgroundColor: Colors.blue, // button color
+    //       foregroundColor: Colors.white, // text/icon color
+    //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    //       shape: RoundedRectangleBorder(
+    //         borderRadius: BorderRadius.circular(8),
+    //       ),
+    //     ),
+    //   ),
 
     const SizedBox(height: 10),
     FloatingActionButton.extended(

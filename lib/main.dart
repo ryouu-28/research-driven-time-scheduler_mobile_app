@@ -10,33 +10,28 @@ import 'screens/taskSchedule/taskScheduleHome.dart';
 import 'controllers/preferencesController.dart';
 import 'services/notification.dart';
 import 'controllers/surveyController.dart';
-import 'package:timezone/data/latest.dart' as tz; 
+import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
-  // Initialize Hive
+
   final appDocDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocDir.path);
 
- 
-
-  // Register all adapters
   Hive.registerAdapter(SurveyFirstAdapter());
   Hive.registerAdapter(SurveyPersonalityAdapter());
   Hive.registerAdapter(TaskModelAdapter());
   Hive.registerAdapter(UserPreferencesModelAdapter());
 
-  // Initialize notifications
   final notificationService = NotificationService();
   await notificationService.initialize();
   await notificationService.requestPermissions();
 
-  
-
+  // ✅ No special handling of notification launch details
   runApp(const MyApp());
 }
 
@@ -74,27 +69,26 @@ class _SplashScreenState extends State<SplashScreen> {
     checkFirstTime();
   }
 
-Future<void> checkFirstTime() async {
-  await Future.delayed(const Duration(seconds: 2));
+  Future<void> checkFirstTime() async {
+    await Future.delayed(const Duration(seconds: 2));
 
-  final surveyController = SurveyFirstController();
-  final answers = await surveyController.getAllAnswers();
+    final surveyController = SurveyFirstController();
+    final answers = await surveyController.getAllAnswers();
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  if (answers.isEmpty) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const SurveyStartpage()),
-    );
-  } else {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const TaskScheduleHome()),
-    );
+    if (answers.isEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SurveyStartpage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const TaskScheduleHome()),
+      );
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
