@@ -12,8 +12,8 @@ import '../../controllers/surveyController.dart';
 import '../../screens/survey/surveyStartPage.dart';
 import '../../services/notification.dart';
 import '../../screens/about/aboutUs.dart';
-
-
+import '../../models/surveyPersonalityModel.dart';
+import 'package:intl/intl.dart';
 
 class TaskScheduleHome extends StatefulWidget {
   const TaskScheduleHome({super.key});
@@ -28,6 +28,9 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
   final SurveyFirstController surveyController = SurveyFirstController();
   final NotificationService notificationService = NotificationService();
   
+  SurveyPersonality? userPersonality;
+      
+  
   List<TaskModel> tasks = [];
   UserPreferencesModel? preferences;
   CalendarView currentView = CalendarView.week;
@@ -38,7 +41,13 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
   void initState() {
     super.initState();
     loadData();
+    surveyController.getPersonality().then((value) { 
+      setState(() { 
+        userPersonality = value; 
+        }); 
+      });
   }
+  
 
   Future<void> loadData() async {
     preferences = await prefsController.getPreferences();
@@ -53,6 +62,12 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
     setState(() {});
   }
 
+  String capitalizeFirstLetter(String text) {
+  if (text.isEmpty) return text;
+  return text[0].toUpperCase() + text.substring(1).toLowerCase();
+}
+
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -63,7 +78,11 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calendar'),
+        title: const Text('Calendar', style: TextStyle(
+          fontFamily: 'Montserrat',
+          // fontWeight: FontWeight.bold,
+
+        ),),
         foregroundColor: Colors.black,
         flexibleSpace: Container(
         decoration: const BoxDecoration(
@@ -106,15 +125,32 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color(0xFFAEADAD),
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Color(0xFFAEADAD)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Menu',
+                    style: TextStyle(color: Colors.white, fontSize: 24, fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+                   
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    capitalizeFirstLetter( userPersonality?.personality ?? "No personality yet",),           
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+
+                  const SizedBox(height: 4),
+                  Text(
+                    preferences!.motivationalMessage,
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
             ),
+
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
@@ -235,7 +271,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
 
               viewHeaderStyle: const ViewHeaderStyle(
                 dayTextStyle: TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   color: Colors.black,
                   fontFamily: 'Montserrat',
                   fontWeight: FontWeight.bold,
@@ -262,9 +298,9 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
                 startHour: 0,
                 endHour: 24,
                 timeInterval: Duration(minutes: 60),
-                timeIntervalHeight: 50,
+                timeIntervalHeight: 65,
                 timeTextStyle: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontFamily: 'Montserrat',
                   color: Colors.black
                   )
@@ -307,29 +343,55 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
     const SizedBox(height: 10),
     FloatingActionButton.extended(
       onPressed: () async {
-        final todayTasks =
-            await taskController.getTasksForDate(DateTime.now());
+        final todayTasks = await taskController.getTasksForDate(DateTime.now());
 
         if (preferences != null &&
             todayTasks.length >= preferences!.maxDailyTasks) {
+          // Find the lowest priority task (assuming smaller number = lower priority)
+          TaskModel? lowestPriorityTask;
+          if (todayTasks.isNotEmpty) {
+            todayTasks.sort((a, b) => a.priority.compareTo(b.priority));
+            lowestPriorityTask = todayTasks.first;
+          }
+
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Daily Limit Reached'),
               content: Text(
                 'You\'ve reached your daily limit of '
-                '${preferences!.maxDailyTasks} tasks. '
-                'Consider completing existing tasks first!',
+                '${preferences!.maxDailyTasks} tasks.\n\n'
+                'Consider completing existing tasks first!'
+                '${lowestPriorityTask != null ? "\n\nLowest priority task: ${lowestPriorityTask.title}" : ""}',
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('OK'),
                 ),
+                if (lowestPriorityTask != null)
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await taskController.deleteTask(lowestPriorityTask!.id);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Removed low priority task: ${lowestPriorityTask.title}",
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+
+                      // Refresh tasks after deletion
+                      refreshTasks();
+                    },
+                    child: const Text('Remove Low Priority'),
+                  ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -357,6 +419,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
           ).then((_) => refreshTasks());
         }
       },
+
       icon: const Icon(Icons.add),
       label: const Text('Create Task'),
       backgroundColor: const Color.fromARGB(255, 11, 192, 72),

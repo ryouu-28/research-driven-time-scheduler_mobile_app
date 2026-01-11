@@ -102,101 +102,139 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
     Future<void> _saveTask() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (startTime == null || endTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select start and end times')),
-      );
-      return;
-    }
-
-    if (endTime!.isBefore(startTime!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End time must be after start time')),
-      );
-      return;
-    }
-
-    final task = TaskModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: titleController.text,
-      description: descriptionController.text,
-      startTime: startTime!,
-      endTime: endTime!,
-      priority: priority,
-      category: category,
-      createdAt: DateTime.now(),
-    );
-
-      await taskController.addTask(task);
-
-      // ✅ NEW: Schedule notification if user wants reminders
-      print('📝 Adding task: ${task.title}'); 
-      print('🔍 needsReminders = ${widget.preferences.needsReminders}');
-
-      if (widget.preferences.needsReminders) {
-        try {
-          final reminderTime = startTime!.subtract(
-            Duration(minutes: widget.preferences.reminderMinutesBefore),
+        if (!_formKey.currentState!.validate()) return;
+        if (startTime == null || endTime == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please select start and end times')),
           );
-          print('🔍 reminderTime = $reminderTime, now = ${DateTime.now()}');
+          return;
+        }
 
-          // Reminder before task starts
-          if (reminderTime.isAfter(DateTime.now())) {
-            await notificationService.scheduleNotification(
-              task.id.hashCode,
-              '⏰ Task Reminder',
-              'Your task "${task.title}" starts in ${widget.preferences.reminderMinutesBefore} minutes!',
-              reminderTime,
-              task.id
-            );
-            print('✅ Reminder notification scheduled for: $reminderTime');
-          } else {
-            print('⏭️ Reminder time is in the past, skipping notification');
+        if (endTime!.isBefore(startTime!)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('End time must be after start time')),
+          );
+          return;
+        }
+
+        if (widget.preferences.scheduleStyle == 'Focus Session') {
+          final hasCollision = await _checkForCollision(startTime!, endTime!);
+          if (hasCollision) {
+            _showCollisionDialog();
+            return;
           }
+        }
 
-          // 🔔 Task start notification
-          if (startTime!.isAfter(DateTime.now())) {
-            await notificationService.scheduleNotification(
-              task.id.hashCode + 1,
-              '🚀 Task Starting',
-              'Your task "${task.title}" is starting now!',
-              startTime!,
-              task.id
-            );
-            print('✅ Start notification scheduled for: $startTime');
-          }
+        final task = TaskModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: titleController.text,
+          description: descriptionController.text,
+          startTime: startTime!,
+          endTime: endTime!,
+          priority: priority,
+          category: category,
+          createdAt: DateTime.now(),
+        );
 
-          // 🔔 Task end notification
-          if (endTime != null && endTime!.isAfter(DateTime.now())) {
-            await notificationService.scheduleNotification(
-              task.id.hashCode + 2,
-              '✅ Task Completed',
-              'Your task "${task.title}" has ended!',
-              endTime!,
-              task.id
-            );
-            print('✅ End notification scheduled for: $endTime');
-          }
+        await taskController.addTask(task);
 
-        } catch (e) {
-          print('❌ Error scheduling notifications: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Task added successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
         }
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.preferences.needsReminders 
-              ? 'Task added with reminders!' 
-              : 'Task added successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
+      // ✅ NEW: Check if proposed time collides with existing tasks
+      Future<bool> _checkForCollision(DateTime proposedStart, DateTime proposedEnd) async {
+        final existingTasks = await taskController.getTasksForDate(widget.selectedDate);
+        
+        for (var task in existingTasks) {
+          // Check if times overlap
+          // Overlap occurs if: (start1 < end2) AND (start2 < end1)
+          if (proposedStart.isBefore(task.endTime) && task.startTime.isBefore(proposedEnd)) {
+            return true; // Collision detected
+          }
+        }
+        
+        return false; // No collision
       }
 
-  }
+      // ✅ NEW: Show dialog when collision is detected
+      void _showCollisionDialog() {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange),
+                SizedBox(width: 10),
+                Text('Time Conflict'),
+              ],
+            ),
+            content: const Text(
+              'This time slot conflicts with an existing task. '
+              'Focus Session mode requires non-overlapping tasks.\n\n'
+              'Please choose a different time.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _suggestNextAvailableTime();
+                },
+                child: const Text('Suggest Time'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // ✅ NEW: Suggest next available time slot
+      Future<void> _suggestNextAvailableTime() async {
+        final existingTasks = await taskController.getTasksForDate(widget.selectedDate);
+        
+        if (existingTasks.isEmpty) return;
+        
+        // Sort tasks by start time
+        existingTasks.sort((a, b) => a.startTime.compareTo(b.startTime));
+        
+        // Find the latest end time
+        DateTime latestEnd = existingTasks.last.endTime;
+        
+        // Suggest starting after the last task
+        DateTime suggestedStart = latestEnd;
+        DateTime suggestedEnd = suggestedStart.add(
+          Duration(minutes: widget.preferences.recommendedTaskDuration),
+        );
+        
+        setState(() {
+          startTime = suggestedStart;
+          endTime = suggestedEnd;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Suggested time: ${_formatTime(suggestedStart)} - ${_formatTime(suggestedEnd)}',
+            ),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      String _formatTime(DateTime time) {
+        return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      }
 
   @override
   Widget build(BuildContext context) {
@@ -272,14 +310,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   labelText: 'Description (optional)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.description),
+                  labelStyle: TextStyle(fontSize: 16, fontFamily: 'Montserrat')
                 ),
-                maxLines: 3,
+                maxLines: 1,
               ),
               const SizedBox(height: 15),
 
               // Category
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(),

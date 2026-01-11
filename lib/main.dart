@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      title: 'Time Scheduler',
+      title: 'Time Guide',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 30),
               const Text(
-                'Time Scheduler',
+                'Time Guide',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

@@ -106,4 +106,49 @@ class TaskController {
     final completed = tasks.where((t) => t.isCompleted).length;
     return (completed / tasks.length) * 100;
   }
-}
+
+
+  // Add this to your TaskController class
+
+// Check if a time range conflicts with existing tasks
+    Future<bool> hasTimeConflict(DateTime start, DateTime end, DateTime date, {String? excludeTaskId}) async {
+      final tasks = await getTasksForDate(date);
+      
+      for (var task in tasks) {
+        // Skip if this is the task being edited
+        if (excludeTaskId != null && task.id == excludeTaskId) {
+          continue;
+        }
+        
+        // Check for overlap: (start1 < end2) AND (start2 < end1)
+        if (start.isBefore(task.endTime) && task.startTime.isBefore(end)) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+
+    // Find next available time slot and suggest it
+    Future<DateTime?> findNextAvailableSlot(DateTime preferredStart, int durationMinutes, DateTime date) async {
+      final tasks = await getTasksForDate(date);
+      
+      if (tasks.isEmpty) {
+        return preferredStart;
+      }
+    
+      tasks.sort((a, b) => a.startTime.compareTo(b.startTime));
+      
+      DateTime currentStart = preferredStart;
+      
+      for (var task in tasks) {
+        DateTime proposedEnd = currentStart.add(Duration(minutes: durationMinutes));
+        if (proposedEnd.isBefore(task.startTime) || proposedEnd.isAtSameMomentAs(task.startTime)) {
+          return currentStart;
+        }
+        currentStart = task.endTime;
+      }
+      
+      return currentStart;
+    }
+    }

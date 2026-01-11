@@ -39,11 +39,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkUserStatus() async {
     await Future.delayed(const Duration(seconds: 3));
-    print("TITE");
     final controller = SurveyFirstController();
     final answers = await controller.getAllAnswers();
-    print("TITE ${answers.length}");
-    print("TITE2");
     if (!mounted) return;
 
     if (answers.isEmpty) {
@@ -99,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  'Time Scheduler',
+                  'Time Guide',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
