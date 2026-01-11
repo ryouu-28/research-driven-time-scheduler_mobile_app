@@ -1,11 +1,20 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:research_driven_time_scheduler_mobile_app/models/taskModel.dart';
+import 'package:timezone/timezone.dart' as tz;
+import '../controllers/taskController.dart';
+import '../screens/taskSchedule/taskDetailScreen.dart';
+import 'package:flutter/material.dart';
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
+  TaskController taskController = TaskController();
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -33,9 +42,12 @@ class NotificationService {
       );
 
       await flutterLocalNotificationsPlugin.initialize(
+        
         initializationSettings,
         onDidReceiveNotificationResponse: onNotificationTap,
       );
+      await flutterLocalNotificationsPlugin.cancelAll();
+
 
       _initialized = true;
       print('✅ Notifications initialized successfully');
@@ -44,9 +56,27 @@ class NotificationService {
     }
   }
 
-  void onNotificationTap(NotificationResponse notificationResponse) {
-    print('Notification tapped: ${notificationResponse.payload}');
+   void onNotificationTap(NotificationResponse notificationResponse) async {
+  final payload = notificationResponse.payload;
+  print('Notification tapped: $payload');
+
+  if (payload != null && payload.startsWith('task:')) {
+    final taskIdStr = payload.split(':')[1]; // 👈 keep as string
+    final task = await taskController.getTaskById(taskIdStr);
+
+    if (task != null) {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => TaskDetailScreen(task: task),
+        ),
+      );
+    } else {
+      print('⚠️ Task not found for ID: $taskIdStr');
+    }
   }
+}
+
+
 
   Future<bool> requestPermissions() async {
     try {
@@ -91,9 +121,60 @@ class NotificationService {
       return false;
     }
   }
+      Future<void> scheduleTaskWithStartAndEnd(TaskModel task) async {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        task.hashCode, // notification ID
+        'Task Starting',
+        '${task.title} is starting now!',
+        tz.TZDateTime.from(task.startTime, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_start_channel',
+            'Task Start Notifications',
+            channelDescription: 'Notifies when a task starts',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: null,
+        payload: 'task:${task.id}', // 👈 use the actual task’s string ID
+      );
 
-  Future<void> showNotification(String title, String body) async {
-    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        task.hashCode + 1,
+        'Task Completed',
+        '${task.title} has ended!',
+        tz.TZDateTime.from(task.endTime, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_end_channel',
+            'Task End Notifications',
+            channelDescription: 'Notifies when a task ends',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: null,
+        payload: 'task:${task.id}', // 👈 use the actual task’s string ID
+      );
+
+      print('✅ Scheduled start and end notifications for ${task.title}');
+    }
+
+
+      Future<void> showNotification(String title, String body, String taskID) async {
       await flutterLocalNotificationsPlugin.show(
         DateTime.now().millisecondsSinceEpoch % 100000,
         title,
@@ -114,13 +195,10 @@ class NotificationService {
             presentSound: true,
           ),
         ),
+        payload: 'task:$taskID', // 👈 pass the actual task’s string ID
       );
-      print('✅ Notification shown: $title');
-    } catch (e) {
-       print('❌ Error initializing notifications: $e');
-}
+    }
 
-  }
     Future<void> openExactAlarmSettings() async {
       const intent = AndroidIntent(
         action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
@@ -133,35 +211,39 @@ class NotificationService {
     String title,
     String body,
     DateTime scheduledTime,
+    String taskID,
   ) async {
     try {
       if (scheduledTime.isBefore(DateTime.now())) {
         print('⏭️ Scheduled time is in the past, showing instant notification');
-        await showNotification(title, body);
+        await showNotification(title, body, id.toString());
         return;
       }
 
-      await flutterLocalNotificationsPlugin.periodicallyShow(
-        id,
-        title,
-        body,
-        RepeatInterval.everyMinute,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'scheduled_notifications',
-            'Scheduled Notifications',
-            channelDescription: 'Scheduled task notifications',
-            importance: Importance.high,
-            priority: Priority.high,
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+          id,
+          title,
+          body,
+          tz.TZDateTime.from(scheduledTime, tz.local),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'scheduled_notifications',
+              'Scheduled Notifications',
+              channelDescription: 'Scheduled task notifications',
+              importance: Importance.high,
+              priority: Priority.high,
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          matchDateTimeComponents: null, // ensures it's one-time
+          payload: 'task:$TaskModel.id',
+);
+
       
       print('✅ Scheduled notification for: $scheduledTime');
     } catch (e) {
@@ -195,6 +277,7 @@ class NotificationService {
     await showNotification(
       '🎉 Test Notification',
       'Your notifications are working perfectly!',
+      '0',
     );
   }
 }

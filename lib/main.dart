@@ -12,6 +12,8 @@ import 'services/notification.dart';
 import 'controllers/surveyController.dart';
 import 'package:timezone/data/latest.dart' as tz; 
 import 'package:timezone/timezone.dart' as tz;
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +21,8 @@ void main() async {
   // Initialize Hive
   final appDocDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocDir.path);
+
+ 
 
   // Register all adapters
   Hive.registerAdapter(SurveyFirstAdapter());
@@ -31,6 +35,8 @@ void main() async {
   await notificationService.initialize();
   await notificationService.requestPermissions();
 
+  
+
   runApp(const MyApp());
 }
 
@@ -40,6 +46,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Time Scheduler',
       theme: ThemeData(

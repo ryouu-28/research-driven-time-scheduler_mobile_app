@@ -102,73 +102,101 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
     Future<void> _saveTask() async {
-      if (!_formKey.currentState!.validate()) return;
-      if (startTime == null || endTime == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select start and end times')),
-        );
-        return;
-      }
-
-      if (endTime!.isBefore(startTime!)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('End time must be after start time')),
-        );
-        return;
-      }
-
-      final task = TaskModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: titleController.text,
-        description: descriptionController.text,
-        startTime: startTime!,
-        endTime: endTime!,
-        priority: priority,
-        category: category,
-        createdAt: DateTime.now(),
+    if (!_formKey.currentState!.validate()) return;
+    if (startTime == null || endTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select start and end times')),
       );
+      return;
+    }
+
+    if (endTime!.isBefore(startTime!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('End time must be after start time')),
+      );
+      return;
+    }
+
+    final task = TaskModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: titleController.text,
+      description: descriptionController.text,
+      startTime: startTime!,
+      endTime: endTime!,
+      priority: priority,
+      category: category,
+      createdAt: DateTime.now(),
+    );
 
       await taskController.addTask(task);
 
-      // 🆕 ADD THIS - Schedule alarms for task start and end
+      // ✅ NEW: Schedule notification if user wants reminders
+      print('📝 Adding task: ${task.title}'); 
+      print('🔍 needsReminders = ${widget.preferences.needsReminders}');
+
       if (widget.preferences.needsReminders) {
-        final notificationService = NotificationService();
-        
-        // Alarm for task START (15 minutes before)
-        final reminderTime = task.startTime.subtract(
-          Duration(minutes: widget.preferences.reminderMinutesBefore)
-        );
-        
-        if (reminderTime.isAfter(DateTime.now())) {
-          await notificationService.scheduleNotification(
-            int.parse(task.id), // Unique ID for start alarm
-            '⏰ Task Starting Soon',
-            '${task.title} starts in ${widget.preferences.reminderMinutesBefore} minutes',
-            reminderTime,
+        try {
+          final reminderTime = startTime!.subtract(
+            Duration(minutes: widget.preferences.reminderMinutesBefore),
           );
-        }
-        
-        // Alarm for task END
-        if (task.endTime.isAfter(DateTime.now())) {
-          await notificationService.scheduleNotification(
-            int.parse(task.id) + 1000000, // Different ID for end alarm
-            '⏰ Task Ending',
-            '${task.title} is ending now. Time to wrap up!',
-            task.endTime,
-          );
+          print('🔍 reminderTime = $reminderTime, now = ${DateTime.now()}');
+
+          // Reminder before task starts
+          if (reminderTime.isAfter(DateTime.now())) {
+            await notificationService.scheduleNotification(
+              task.id.hashCode,
+              '⏰ Task Reminder',
+              'Your task "${task.title}" starts in ${widget.preferences.reminderMinutesBefore} minutes!',
+              reminderTime,
+              task.id
+            );
+            print('✅ Reminder notification scheduled for: $reminderTime');
+          } else {
+            print('⏭️ Reminder time is in the past, skipping notification');
+          }
+
+          // 🔔 Task start notification
+          if (startTime!.isAfter(DateTime.now())) {
+            await notificationService.scheduleNotification(
+              task.id.hashCode + 1,
+              '🚀 Task Starting',
+              'Your task "${task.title}" is starting now!',
+              startTime!,
+              task.id
+            );
+            print('✅ Start notification scheduled for: $startTime');
+          }
+
+          // 🔔 Task end notification
+          if (endTime != null && endTime!.isAfter(DateTime.now())) {
+            await notificationService.scheduleNotification(
+              task.id.hashCode + 2,
+              '✅ Task Completed',
+              'Your task "${task.title}" has ended!',
+              endTime!,
+              task.id
+            );
+            print('✅ End notification scheduled for: $endTime');
+          }
+
+        } catch (e) {
+          print('❌ Error scheduling notifications: $e');
         }
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task added successfully with reminders!'),
+          SnackBar(
+            content: Text(widget.preferences.needsReminders 
+              ? 'Task added with reminders!' 
+              : 'Task added successfully!'),
             backgroundColor: Colors.green,
           ),
         );
         Navigator.pop(context);
       }
-    }
+
+  }
 
   @override
   Widget build(BuildContext context) {
