@@ -4,7 +4,6 @@ import '../../models/taskModel.dart';
 import '../../models/userPreferencesModel.dart';
 import '../../controllers/taskController.dart';
 import '../../utils/surveyAnalyzer.dart';
-import '../../services/notification.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final UserPreferencesModel preferences;
@@ -23,10 +22,12 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final TaskController taskController = TaskController();
-  final NotificationService notificationService = NotificationService();
+  
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   
+  // ADD THIS: Store selected date separately from time
+  late DateTime selectedDate;
   DateTime? startTime;
   DateTime? endTime;
   int priority = 2;
@@ -45,6 +46,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   void initState() {
     super.initState();
+    // Initialize with the passed date
+    selectedDate = widget.selectedDate;
     _setDefaultTimes();
   }
 
@@ -53,10 +56,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       widget.preferences.preferredTimeSlot,
     );
     
+    // Use the selected date instead of widget.selectedDate
     startTime = DateTime(
-      widget.selectedDate.year,
-      widget.selectedDate.month,
-      widget.selectedDate.day,
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
       timeSlot['start']!,
       0,
     );
@@ -64,6 +68,41 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     endTime = startTime!.add(
       Duration(minutes: widget.preferences.recommendedTaskDuration),
     );
+  }
+
+  // ADD THIS: Date picker function
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        // Update start and end times with new date
+        if (startTime != null) {
+          startTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            startTime!.hour,
+            startTime!.minute,
+          );
+        }
+        if (endTime != null) {
+          endTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            endTime!.hour,
+            endTime!.minute,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _selectTime(BuildContext context, bool isStartTime) async {
@@ -76,9 +115,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       setState(() {
         if (isStartTime) {
           startTime = DateTime(
-            widget.selectedDate.year,
-            widget.selectedDate.month,
-            widget.selectedDate.day,
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
             picked.hour,
             picked.minute,
           );
@@ -90,9 +129,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           }
         } else {
           endTime = DateTime(
-            widget.selectedDate.year,
-            widget.selectedDate.month,
-            widget.selectedDate.day,
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
             picked.hour,
             picked.minute,
           );
@@ -101,140 +140,45 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
-    Future<void> _saveTask() async {
-        if (!_formKey.currentState!.validate()) return;
-        if (startTime == null || endTime == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select start and end times')),
-          );
-          return;
-        }
+  Future<void> _saveTask() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (startTime == null || endTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select start and end times')),
+      );
+      return;
+    }
 
-        if (endTime!.isBefore(startTime!)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('End time must be after start time')),
-          );
-          return;
-        }
+    if (endTime!.isBefore(startTime!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('End time must be after start time')),
+      );
+      return;
+    }
 
-        if (widget.preferences.scheduleStyle == 'Focus Session') {
-          final hasCollision = await _checkForCollision(startTime!, endTime!);
-          if (hasCollision) {
-            _showCollisionDialog();
-            return;
-          }
-        }
+    final task = TaskModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: titleController.text,
+      description: descriptionController.text,
+      startTime: startTime!,
+      endTime: endTime!,
+      priority: priority,
+      category: category,
+      createdAt: DateTime.now(),
+    );
 
-        final task = TaskModel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: titleController.text,
-          description: descriptionController.text,
-          startTime: startTime!,
-          endTime: endTime!,
-          priority: priority,
-          category: category,
-          createdAt: DateTime.now(),
-        );
+    await taskController.addTask(task);
 
-        await taskController.addTask(task);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Task added successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context);
-        }
-      }
-
-      // ✅ NEW: Check if proposed time collides with existing tasks
-      Future<bool> _checkForCollision(DateTime proposedStart, DateTime proposedEnd) async {
-        final existingTasks = await taskController.getTasksForDate(widget.selectedDate);
-        
-        for (var task in existingTasks) {
-          // Check if times overlap
-          // Overlap occurs if: (start1 < end2) AND (start2 < end1)
-          if (proposedStart.isBefore(task.endTime) && task.startTime.isBefore(proposedEnd)) {
-            return true; // Collision detected
-          }
-        }
-        
-        return false; // No collision
-      }
-
-      // ✅ NEW: Show dialog when collision is detected
-      void _showCollisionDialog() {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.warning, color: Colors.orange),
-                SizedBox(width: 10),
-                Text('Time Conflict'),
-              ],
-            ),
-            content: const Text(
-              'This time slot conflicts with an existing task. '
-              'Focus Session mode requires non-overlapping tasks.\n\n'
-              'Please choose a different time.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _suggestNextAvailableTime();
-                },
-                child: const Text('Suggest Time'),
-              ),
-            ],
-          ),
-        );
-      }
-
-      // ✅ NEW: Suggest next available time slot
-      Future<void> _suggestNextAvailableTime() async {
-        final existingTasks = await taskController.getTasksForDate(widget.selectedDate);
-        
-        if (existingTasks.isEmpty) return;
-        
-        // Sort tasks by start time
-        existingTasks.sort((a, b) => a.startTime.compareTo(b.startTime));
-        
-        // Find the latest end time
-        DateTime latestEnd = existingTasks.last.endTime;
-        
-        // Suggest starting after the last task
-        DateTime suggestedStart = latestEnd;
-        DateTime suggestedEnd = suggestedStart.add(
-          Duration(minutes: widget.preferences.recommendedTaskDuration),
-        );
-        
-        setState(() {
-          startTime = suggestedStart;
-          endTime = suggestedEnd;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Suggested time: ${_formatTime(suggestedStart)} - ${_formatTime(suggestedEnd)}',
-            ),
-            backgroundColor: Colors.blue,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-
-      String _formatTime(DateTime time) {
-        return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task added successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -310,15 +254,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   labelText: 'Description (optional)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.description),
-                  labelStyle: TextStyle(fontSize: 16, fontFamily: 'Montserrat')
                 ),
-                maxLines: 1,
+                maxLines: 3,
               ),
               const SizedBox(height: 15),
 
               // Category
               DropdownButtonFormField<String>(
-                initialValue: category,
+                value: category,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(),
@@ -348,6 +291,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 ],
               ),
               const SizedBox(height: 20),
+
+              // ADD THIS: Date Picker
+              ListTile(
+                title: const Text('Date'),
+                subtitle: Text(DateFormat('EEEE, MMMM d, y').format(selectedDate)),
+                leading: const Icon(Icons.calendar_today),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                onTap: () => _selectDate(context),
+              ),
+              const SizedBox(height: 10),
 
               // Start Time
               ListTile(
@@ -444,8 +400,4 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     descriptionController.dispose();
     super.dispose();
   }
-
-  
-
 }
-
