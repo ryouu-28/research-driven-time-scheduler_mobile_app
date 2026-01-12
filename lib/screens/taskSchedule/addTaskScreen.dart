@@ -86,13 +86,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 }
 
 
-  // ADD THIS: Date picker function
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
     );
 
     if (picked != null && picked != selectedDate) {
@@ -165,7 +164,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   Future<void> _saveTask() async {
-  if (!_formKey.currentState!.validate()) return;
+   if (!_formKey.currentState!.validate()) return;
   if (startTime == null || endTime == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Please select start and end times')),
@@ -180,7 +179,59 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return;
   }
 
-  // ✅ NEW: Check for overlaps if schedule style is "Focus Session"
+  final tasksForDay = await taskController.getTasksForDate(selectedDate);
+  if (widget.preferences != null &&
+      tasksForDay.length >= widget.preferences!.maxDailyTasks) {
+    // Show dialog if limit reached
+    TaskModel? lowestPriorityTask;
+    if (tasksForDay.isNotEmpty) {
+      tasksForDay.sort((a, b) => a.priority.compareTo(b.priority));
+      lowestPriorityTask = tasksForDay.first;
+    }
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Daily Limit Reached'),
+        content: Text(
+          'You\'ve reached your daily limit of '
+          '${widget.preferences!.maxDailyTasks} tasks for '
+          '${DateFormat('MMM d, yyyy').format(selectedDate)}.\n\n'
+          'Consider completing existing tasks first!'
+          '${lowestPriorityTask != null ? "\n\nLowest priority task: ${lowestPriorityTask.title}" : ""}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          if (lowestPriorityTask != null)
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context, true);
+                await taskController.deleteTask(lowestPriorityTask!.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Removed low priority task: ${lowestPriorityTask.title}",
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              },
+              child: const Text('Remove Low Priority'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Add Anyway'),
+          ),
+        ],
+      ),
+    );
+
+    if (proceed != true) return; // User cancelled
+  }
+
   if (widget.preferences.scheduleStyle == 'Focus Session') {
     final hasConflict = await taskController.hasTimeConflict(
       startTime!,

@@ -74,10 +74,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final surveyController = SurveyFirstController();
     final answers = await surveyController.getAllAnswers();
+    final personality = await surveyController.getPersonality();
 
     if (!mounted) return;
 
-    if (answers.isEmpty) {
+    if (answers.isEmpty || personality == null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const SurveyStartpage()),

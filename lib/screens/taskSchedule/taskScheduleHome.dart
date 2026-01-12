@@ -163,6 +163,16 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.account_circle),
+              title:  Text('View Profile', style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SurveyComplete()),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.restart_alt_outlined, color: Color.fromARGB(255, 0, 0, 0)),
               title:  Text("Restart Survey", style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
               onTap: () async {
@@ -247,16 +257,6 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
                     MaterialPageRoute(builder: (_) => const TaskScheduleHome()),
                   );
                 }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title:  Text('View Profile', style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SurveyComplete()),
-                );
               },
             ),
           ],
@@ -398,7 +398,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
     const SizedBox(height: 10),
     FloatingActionButton.extended(
       onPressed: () async {
-        final todayTasks = await taskController.getTasksForDate(DateTime.now());
+        final todayTasks = await taskController.getTasksForDate(selectedDate);
 
         if (preferences != null &&
             todayTasks.length >= preferences!.maxDailyTasks) {

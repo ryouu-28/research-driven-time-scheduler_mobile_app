@@ -4,51 +4,51 @@ import '../utils/surveyAnalyzer.dart';
 
 class SmartScheduler {
   // Generate suggested tasks for the day
-  static List<Map<String, dynamic>> generateDailySuggestions(
-    UserPreferencesModel preferences,
-    DateTime targetDate,
-  ) {
-    final timeSlot = SurveyAnalyzer.getRecommendedTimeSlot(
-      preferences.preferredTimeSlot,
-    );
+  // static List<Map<String, dynamic>> generateDailySuggestions(
+  //   UserPreferencesModel preferences,
+  //   DateTime targetDate,
+  // ) {
+  //   final timeSlot = SurveyAnalyzer.getRecommendedTimeSlot(
+  //     preferences.preferredTimeSlot,
+  //   );
 
-    List<Map<String, dynamic>> suggestions = [];
-    int currentHour = timeSlot['start']!;
-    final endHour = timeSlot['end']!;
+  //   List<Map<String, dynamic>> suggestions = [];
+  //   int currentHour = timeSlot['start']!;
+  //   final endHour = timeSlot['end']!;
 
-    int taskCount = 0;
-    while (currentHour < endHour && taskCount < preferences.maxDailyTasks) {
-      final startTime = DateTime(
-        targetDate.year,
-        targetDate.month,
-        targetDate.day,
-        currentHour,
-        0,
-      );
+  //   int taskCount = 0;
+  //   while (currentHour < endHour && taskCount < preferences.maxDailyTasks) {
+  //     final startTime = DateTime(
+  //       targetDate.year,
+  //       targetDate.month,
+  //       targetDate.day,
+  //       currentHour,
+  //       0,
+  //     );
 
-      final duration = preferences.recommendedTaskDuration;
-      final endTime = startTime.add(Duration(minutes: duration));
+  //     final duration = preferences.recommendedTaskDuration;
+  //     final endTime = startTime.add(Duration(minutes: duration));
 
-      suggestions.add({
-        'startTime': startTime,
-        'endTime': endTime,
-        'duration': duration,
-        'slot': taskCount + 1,
-      });
+  //     suggestions.add({
+  //       'startTime': startTime,
+  //       'endTime': endTime,
+  //       'duration': duration,
+  //       'slot': taskCount + 1,
+  //     });
 
-      // Add break time for focus session
-      if (preferences.scheduleStyle == 'Focus Session') {
-        currentHour += (duration / 60).ceil();
-        currentHour += 0; // 15 min break (can adjust)
-      } else {
-        currentHour += (duration / 60).ceil();
-      }
+  //     // Add break time for focus session
+  //     if (preferences.scheduleStyle == 'Focus Session') {
+  //       currentHour += (duration / 60).ceil();
+  //       currentHour += 0; // 15 min break (can adjust)
+  //     } else {
+  //       currentHour += (duration / 60).ceil();
+  //     }
 
-      taskCount++;
-    }
+  //     taskCount++;
+  //   }
 
-    return suggestions;
-  }
+  //   return suggestions;
+  // }
 
   // Break down large task into subtasks
   static List<TaskModel> breakDownLargeTask(
@@ -188,22 +188,22 @@ class SmartScheduler {
   }
 
   // Get productivity tip based on personality
-  static String getProductivityTip(String personalityType) {
-    switch (personalityType) {
-      case 'classic':
-        return '💡 Set artificial deadlines 2 days before the real one!';
-      case 'perfectionist':
-        return '💡 Set a timer and stop when it rings - done is better than perfect!';
-      case 'reward':
-        return '💡 Plan your reward before starting the task!';
-      case 'mood':
-        return '💡 Start with a 5-minute task to boost your mood!';
-      case 'overwhelm':
-        return '💡 Use the 2-minute rule: if it takes less than 2 minutes, do it now!';
-      case 'drifter':
-        return '💡 Set alarms for each task transition!';
-      default:
-        return '💡 Break your work into focused 25-minute sessions!';
-    }
-  }
+  // static String getProductivityTip(String personalityType) {
+  //   switch (personalityType) {
+  //     case 'classic':
+  //       return '💡 Set artificial deadlines 2 days before the real one!';
+  //     case 'perfectionist':
+  //       return '💡 Set a timer and stop when it rings - done is better than perfect!';
+  //     case 'reward':
+  //       return '💡 Plan your reward before starting the task!';
+  //     case 'mood':
+  //       return '💡 Start with a 5-minute task to boost your mood!';
+  //     case 'overwhelm':
+  //       return '💡 Use the 2-minute rule: if it takes less than 2 minutes, do it now!';
+  //     case 'drifter':
+  //       return '💡 Set alarms for each task transition!';
+  //     default:
+  //       return '💡 Break your work into focused 25-minute sessions!';
+  //   }
+  // }
 }

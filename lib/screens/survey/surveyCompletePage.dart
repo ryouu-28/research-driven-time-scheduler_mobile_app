@@ -43,21 +43,26 @@ class _SurveyCompleteUpdatedState extends State<SurveyComplete> {
     final preferences = SurveyAnalyzer.analyzeAnswers(answers, personality);
     await prefsController.savePreferences(preferences);
 
-
-    // Build result messages
     setState(() {
       results = [
-        const Text(
-          'Welcome to Your Personalized Scheduler!',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'Based on your answers, we\'ve created a schedule that works for you:',
-          style: TextStyle(fontSize: 16),
-          textAlign: TextAlign.center,
-        ),
+         SizedBox(
+              width: double.infinity, 
+              child: const Text(
+                'Welcome to TIME GUIDE!',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity, 
+              child: const Text(
+                'Based on your answers, we’ve created a personalized profile and preferences to help you manage your time effectively.',
+                style: TextStyle(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(20),
