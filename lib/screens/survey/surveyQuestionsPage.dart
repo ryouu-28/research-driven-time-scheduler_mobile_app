@@ -63,7 +63,6 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
       scores[key] = (scores[key] ?? 0) + num;
     });
     
-    // Remove excessive printing - only print final scores
     print('Current scores updated: $scores');
   }
 
@@ -71,7 +70,7 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
     setState(() {
       addScore(opt);
       selectedPath = opt["nextPath"];
-      currentIndex = 0; // Reset index for new path
+      currentIndex = 0; 
     });
   }
 
@@ -108,13 +107,12 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
         currentIndex++;
       });
     } else {
-      // Last question - save and navigate
       checkPersonality().then((_) {
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const SurveyCompleteUpdated(),
+              builder: (context) => const SurveyComplete(),
             ),
           );
         }
@@ -157,53 +155,69 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
       
     return Scaffold(
       body: Stack(
-        children: [
-          // Background image
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/background.png", // your PNG path
-              fit: BoxFit.cover,       // makes it fill the screen
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    root["question"],
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
-                  ...options.map<Widget>((opt) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
-                          backgroundColor: Color(0xFFD9D9D9),
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () => selectRoot(opt),
-                        child: Text(
-                          opt["text"],
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ],
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/background.png",
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-        ],
-      ),
+            SafeArea(
+              child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, 
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    LinearProgressIndicator(
+                      value: (currentIndex + 6) / 11,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Question ${currentIndex + 6} of 11',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+                    Text(
+                      root["question"],
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Options
+                    ...options.map<Widget>((opt) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: SizedBox(
+                          width: 350, // 👈 same width for all buttons
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.all(16),
+                              backgroundColor: const Color(0xFFD9D9D9),
+                              foregroundColor: Colors.black,
+                            ),
+                            onPressed: () => selectRoot(opt),
+                            child: Text(opt["text"], textAlign: TextAlign.center),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+
+                  ],
+                ),
+              ),),
+            ),
+          ],
+        ),
+
     );
         }
 
@@ -225,60 +239,65 @@ class _SurveyQuestionsPageState extends State<SurveyQuestionsPage> {
     final currentQuestion = questions[currentIndex];
     final options = currentQuestion["options"];
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              LinearProgressIndicator(
-                value: (currentIndex + 1) / questions.length,
-                backgroundColor: Colors.grey.shade200,
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Question ${currentIndex + 1} of ${questions.length}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                currentQuestion["question"],
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              ...options.map<Widget>((opt) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => selectOption(opt),
-                    child: Text(
-                      opt["text"],
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ],
+  return Scaffold(
+     body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/background.png",
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LinearProgressIndicator(
+                    value: (currentIndex + 7) / (questions.length + 7),
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Question ${currentIndex + 7} of ${questions.length + 7}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    currentQuestion["question"],
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
+                  ...options.map<Widget>((opt) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
+                          backgroundColor: const Color(0xFFD9D9D9),
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: () => selectOption(opt),
+                        child: Text(opt["text"], textAlign: TextAlign.center),
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
+
   }
 
   @override

@@ -14,6 +14,8 @@ import '../../services/notification.dart';
 import '../../screens/about/aboutUs.dart';
 import '../../models/surveyPersonalityModel.dart';
 import 'package:intl/intl.dart';
+import '../../screens/survey/surveyCompletePage.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TaskScheduleHome extends StatefulWidget {
   const TaskScheduleHome({super.key});
@@ -78,11 +80,10 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calendar', style: TextStyle(
-          fontFamily: 'Montserrat',
-          // fontWeight: FontWeight.bold,
-
-        ),),
+        title: Text(
+          'Calendar', 
+          style: GoogleFonts.lato( fontSize: 29, fontWeight: FontWeight.w700, color: Colors.black,),
+        ),
         foregroundColor: Colors.black,
         flexibleSpace: Container(
         decoration: const BoxDecoration(
@@ -115,7 +116,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
             icon: const Icon(Icons.calendar_month),
             onPressed: () {
               setState(() {
-                currentView = CalendarView.month;
+                currentView = CalendarView.day;
               });
             },
           ),
@@ -126,34 +127,34 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: Color(0xFFAEADAD)),
+              decoration: const BoxDecoration(color: Colors.black ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Menu',
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+                    style: GoogleFonts.lato( fontSize: 29, fontWeight: FontWeight.w700, color: Colors.white,),
                    
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     capitalizeFirstLetter( userPersonality?.personality ?? "No personality yet",),           
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                    style: GoogleFonts.lato( fontSize: 16, fontWeight: FontWeight.w400, color: Colors.white,),
                   ),
 
                   const SizedBox(height: 4),
                   Text(
                     preferences!.motivationalMessage,
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white,),
                   ),
                 ],
               ),
             ),
 
             ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
+              leading: const Icon(Icons.home_outlined),
+              title:  Text('Home', style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
@@ -162,15 +163,59 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text("Reset Data"),
+              leading: const Icon(Icons.restart_alt_outlined, color: Color.fromARGB(255, 0, 0, 0)),
+              title:  Text("Restart Survey", style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
               onTap: () async {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Confirm Reset'),
+                    title: const Text('Confirm Restart'),
                     content: const Text(
-                      'Are you sure you want to delete all survey data? This action cannot be undone.',
+                      'Are you sure you want to restart the survey?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false), // cancel
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(context, true), // confirm
+                        child: const Text('Restart'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  // await taskController.clearAllTasks();
+                  await surveyController.resetAllData();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("✅ All survey data deleted"),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );  
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SurveyStartpage()),
+                  );
+                }
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.delete, color: Color.fromARGB(255, 0, 0, 0)),
+              title:  Text("Delete All Task", style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
+              onTap: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirm Delete'),
+                    content: const Text(
+                      'Are you sure you want to delete all existing task?',
                     ),
                     actions: [
                       TextButton(
@@ -188,29 +233,29 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
 
                 if (confirmed == true) {
                   await taskController.clearAllTasks();
-                  await surveyController.resetAllData();
+                  // await surveyController.resetAllData();
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("✅ All survey data deleted"),
                       backgroundColor: Colors.redAccent,
                     ),
-                  );
+                  );  
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const SurveyStartpage()),
+                    MaterialPageRoute(builder: (_) => const TaskScheduleHome()),
                   );
                 }
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('About Us'),
+              leading: const Icon(Icons.account_circle),
+              title:  Text('View Profile', style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black,),),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const aboutUs()),
+                  MaterialPageRoute(builder: (_) => const SurveyComplete()),
                 );
               },
             ),
@@ -256,17 +301,20 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
               ),
             ),
             child: SfCalendar(
-              key: ValueKey(currentView), // keeps view switching working
+              key: ValueKey(currentView), 
               view: currentView,
             
               //Month Style
               headerStyle: const CalendarHeaderStyle(
+                backgroundColor: Colors.black,
+                textAlign: TextAlign.center,
                 textStyle: TextStyle(
+                  color: Colors.white,
                   fontSize: 15,
                   fontFamily: 'Montserrat',
                   fontWeight:  FontWeight.bold,
-                  backgroundColor: Colors.white,
-                  decorationColor: Colors.black,
+                  // backgroundColor: Colors.blue,
+                  // decorationColor: Colors.green,
                 ),),
 
               viewHeaderStyle: const ViewHeaderStyle(

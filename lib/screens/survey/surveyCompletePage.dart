@@ -3,16 +3,16 @@ import '../../controllers/surveyController.dart';
 import '../../controllers/preferencesController.dart';
 import '../../utils/surveyAnalyzer.dart';
 import '../taskSchedule/taskScheduleHome.dart';
-import 'package:android_intent_plus/android_intent.dart';
 
-class SurveyCompleteUpdated extends StatefulWidget {
-  const SurveyCompleteUpdated({super.key});
+
+class SurveyComplete extends StatefulWidget {
+  const SurveyComplete({super.key});
 
   @override
-  State<SurveyCompleteUpdated> createState() => _SurveyCompleteUpdatedState();
+  State<SurveyComplete> createState() => _SurveyCompleteUpdatedState();
 }
 
-class _SurveyCompleteUpdatedState extends State<SurveyCompleteUpdated> {
+class _SurveyCompleteUpdatedState extends State<SurveyComplete> {
   final SurveyFirstController surveyController = SurveyFirstController();
   final PreferencesController prefsController = PreferencesController();
   

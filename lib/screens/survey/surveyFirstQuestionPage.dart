@@ -74,22 +74,34 @@ Widget build(BuildContext context) {
       Positioned.fill(
         child: Image.asset(
           "assets/images/background.png",
-          fit: BoxFit.cover, // fills screen proportionally
+          fit: BoxFit.cover, 
         ),
       ),
       Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+              LinearProgressIndicator(
+              value: (currentIndex + 1) / (quizQuestions["survey"].length + 6),
+              backgroundColor: Colors.grey.shade200,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+            Text(
+              'Question ${currentIndex + 1} of ${quizQuestions["survey"].length + 6}',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+
+           const SizedBox(height: 30),
                   Align(
             alignment: Alignment.center,
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 350), // limit width
+              constraints: BoxConstraints(maxWidth: 350), 
              
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 25.0, horizontal: 15.0),
               decoration: BoxDecoration( 
-                color: const Color(0x99D9D9D9), 
+                // color: const Color(0x99D9D9D9), 
               borderRadius: BorderRadius.circular(12)),
                 child: Text(
                   surveyQuestions["question"],
