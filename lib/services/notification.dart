@@ -42,7 +42,7 @@ class NotificationService {
 
       await flutterLocalNotificationsPlugin.initialize(
         initializationSettings,
-        onDidReceiveNotificationResponse: onNotificationTap,
+        // onDidReceiveNotificationResponse: onNotificationTap,
       );
       await flutterLocalNotificationsPlugin.cancelAll();
 
@@ -53,12 +53,12 @@ class NotificationService {
     }
   }
 
-  /// ✅ Refactored: no navigation, just log the tap
-  void onNotificationTap(NotificationResponse notificationResponse) async {
-    final payload = notificationResponse.payload;
-    print('Notification tapped: $payload');
-    // Do nothing else — no navigation
-  }
+  // /// ✅ Refactored: no navigation, just log the tap
+  // void onNotificationTap(NotificationResponse notificationResponse) async {
+  //   // final payload = notificationResponse.payload;
+  //   print('Notification tapped: $payload');
+  //   // Do nothing else — no navigation
+  // }
 
   Future<bool> requestPermissions() async {
     try {
@@ -126,7 +126,7 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: null,
-      payload: 'task:${task.id}',
+      // payload: 'task:${task.id}',
     );
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -150,7 +150,7 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: null,
-      payload: 'task:${task.id}',
+      // payload: 'task:${task.id}',
     );
 
     print('✅ Scheduled start and end notifications for ${task.title}');
@@ -177,7 +177,7 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      payload: 'task:$taskID',
+      // payload: 'task:$taskID',
     );
   }
 
@@ -223,7 +223,7 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: null,
-        payload: 'task:$taskID',
+        // payload: 'task:$taskID',
       );
 
       print('✅ Scheduled notification for: $scheduledTime');

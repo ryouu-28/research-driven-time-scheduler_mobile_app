@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/taskModel.dart';
 import '../../models/userPreferencesModel.dart';
 import '../../controllers/taskController.dart';
+import '../../services/notification.dart';
 import '../../utils/surveyAnalyzer.dart';
 import '../../services/smartScheduler.dart';
 
@@ -387,19 +388,54 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   // Save the task
   await taskController.addTask(task);
 
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.preferences.scheduleStyle == 'Focus Session'
-              ? '✅ Task scheduled in focus session!'
-              : '✅ Task added successfully!',
+    final notificationService = NotificationService();
+    
+    if (widget.preferences.needsReminders) {
+      // Schedule start notification
+      await notificationService.scheduleNotification(
+        task.hashCode,
+        '🔔 Task Starting',
+        '${task.title} is starting now!',
+        task.startTime,
+        task.id,
+      );
+
+      // Schedule end notification
+      await notificationService.scheduleNotification(
+        task.hashCode + 1,
+        '✅ Task Completed',
+        '${task.title} has ended!, Please Mark it as complete in the app.',
+        task.endTime,
+        task.id,
+      );
+
+      print('✅ Scheduled notifications for: ${task.title}');
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task added successfully!'),
+          backgroundColor: Colors.green,
         ),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.pop(context);
-  }
+      );
+      Navigator.pop(context);
+    }
+
+
+  // if (mounted) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(
+  //         widget.preferences.scheduleStyle == 'Focus Session'
+  //             ? '✅ Task scheduled in focus session!'
+  //             : '✅ Task added successfully!',
+  //       ),
+  //       backgroundColor: Colors.green,
+  //     ),
+  //   );
+  //   Navigator.pop(context);
+  // }
 }
   
   @override

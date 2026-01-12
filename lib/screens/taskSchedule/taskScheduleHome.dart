@@ -35,7 +35,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
   
   List<TaskModel> tasks = [];
   UserPreferencesModel? preferences;
-  CalendarView currentView = CalendarView.week;
+  CalendarView currentView = CalendarView.day;
   DateTime selectedDate = DateTime.now();
   bool isLoading = true;
 
@@ -146,7 +146,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
                   const SizedBox(height: 4),
                   Text(
                     preferences!.motivationalMessage,
-                    style: GoogleFonts.lato( fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white,),
+                    style: GoogleFonts.lato( fontSize: 12, fontWeight: FontWeight.w400, color: Colors.white,),
                   ),
                 ],
               ),
