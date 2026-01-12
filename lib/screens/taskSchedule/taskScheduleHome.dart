@@ -116,7 +116,7 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
             icon: const Icon(Icons.calendar_month),
             onPressed: () {
               setState(() {
-                currentView = CalendarView.day;
+                currentView = CalendarView.month;
               });
             },
           ),
@@ -303,6 +303,13 @@ class _TaskScheduleHomeState extends State<TaskScheduleHome> {
             child: SfCalendar(
               key: ValueKey(currentView), 
               view: currentView,
+              // allowedViews: const[
+              //   CalendarView.day,
+              //   CalendarView.week,
+              //   CalendarView.month,
+              // ],
+
+              allowViewNavigation: true,
             
               //Month Style
               headerStyle: const CalendarHeaderStyle(

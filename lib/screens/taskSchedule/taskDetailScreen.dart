@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/taskModel.dart';
 import '../../controllers/taskController.dart';
@@ -22,7 +23,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Task Details'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -31,7 +32,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Container(
+        height: double.infinity,
+        width: double.infinity,
+         decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/images/background.png"), 
+          fit: BoxFit.cover, 
+        ),
+      ),
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +59,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         ? Colors.green
                         : widget.task.isOverdue
                             ? Colors.red
-                            : Colors.blue,
+                            : Colors.black,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -183,6 +193,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ],
         ),
       ),
+      )
     );
   }
 
@@ -195,7 +206,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue),
+          Icon(icon, color: Colors.black),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -211,9 +222,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: GoogleFonts.lato(
                     fontSize: 15,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -229,11 +240,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       case 3:
         return Colors.orange;
       case 2:
-        return Colors.blue;
+        return Colors.green;
       case 1:
         return Colors.grey;
       default:
-        return Colors.blue;
+        return Colors.grey;
     }
   }
 
